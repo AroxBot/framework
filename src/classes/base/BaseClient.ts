@@ -6,7 +6,7 @@ export interface BaseOptions extends ClientOptions {
 }
 
 export default class BaseClient extends Client {
-	logger: LoggerInstance;
+	readonly logger: LoggerInstance;
 
 	constructor(opts: BaseOptions) {
 		super(opts);
