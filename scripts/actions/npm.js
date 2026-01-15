@@ -10,11 +10,6 @@ const packageJson = require("../../package.json");
 const build = require("../utils/build");
 
 async function buildProject() {
-	const npm_token = process.env.NPM_TOKEN;
-	if (!npm_token) {
-		throw new Error("NPM Token Not Found");
-	}
-
 	const owner = process.env.NPM_ORG;
 	const sha = getSha();
 
@@ -34,7 +29,7 @@ async function buildProject() {
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
 
-	generateNpmRc(null, npm_token);
+	//generateNpmRc(null, npm_token);
 
 	const npmVerExists = checkVersionExists(NPM_URL, tempjson.name, version);
 

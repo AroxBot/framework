@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 jobs:
   lint:
@@ -85,6 +86,6 @@ jobs:
       - name: Run github release script
         run: npm run release:npm
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
+          NPM_ORG: ${{ secrets.NPM_ORG }}
