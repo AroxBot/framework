@@ -7,14 +7,20 @@ const GITHUB_URL = "https://npm.pkg.github.com";
 
 const npmrcPath = join(homedir(), ".npmrc");
 function generateNpmRc(githubToken, npmToken) {
-  let line = "";
-  if (githubToken) line = `${GITHUB_URL.replace("https:")}/:_authToken=${githubToken}\n`;
-  if (npmToken) line = `${NPM_URL.replace("https:")}/:_authToken=${npmToken}\n`;
+  let lines = "";
+  if (githubToken) {
+    lines += "@AroxBot:registry=https://npm.pkg.github.com\n";
+    lines += "//npm.pkg.github.com/:_authToken=" + githubToken + "\n";
+  }
+
+  if (npmToken) {
+    lines += "//registry.npmjs.org/:_authToken=" + npmToken + "\n";
+  }
 
   if (existsSync(npmrcPath)) {
-    appendFileSync(npmrcPath, line, { encoding: "utf8" });
+    appendFileSync(npmrcPath, lines, { encoding: "utf8" });
   } else {
-    writeFileSync(npmrcPath, line, { encoding: "utf8" });
+    writeFileSync(npmrcPath, lines, { encoding: "utf8" });
   }
 
   console.log("Temporary .npmrc written for GitHub Registry authentication");
@@ -25,14 +31,13 @@ function getNpmDistTag(version) {
   return pre ? pre[0].toLowerCase() : "latest";
 }
 
-async function checkVersionExists(registryUrl, packageName, version, headers = {}) {
-  const url = `${registryUrl}/${encodeURIComponent(packageName)}`;
-  const res = await fetch(url, { headers });
-
-  if (res.status === 404) return false;
-  if (!res.ok) throw new Error(`Failed to fetch registry info: ${res.status}`);
-  const data = await res.json();
-  return !!data.versions?.[version];
+function checkVersionExists(packageName, version, registry) {
+  try {
+    execSync(`npm view ${packageName}@${version} --registry=${registry}`, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 module.exports = {
