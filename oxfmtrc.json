@@ -2,7 +2,7 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "ignorePatterns": ["dist", "node_modules", "build"],
   "tabWidth": 2,
-  "useTabs": false,
+  "useTabs": true,
   "printWidth": 80,
   "semi": true,
   "singleQuote": false,
@@ -12,5 +12,5 @@
 
   "jsxSingleQuote": false,
   "quoteProps": "as-needed",
-  "embeddedLanguageFormatting": "auto",
+  "embeddedLanguageFormatting": "auto"
 }

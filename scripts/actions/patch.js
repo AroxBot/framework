@@ -20,15 +20,12 @@ async function patch() {
           return getAllJsFiles(fullPath);
         }
 
-        if (
-          entry.isFile() &&
-          (fullPath.endsWith(".js") || fullPath.endsWith(".mjs"))
-        ) {
+        if (entry.isFile() && (fullPath.endsWith(".js") || fullPath.endsWith(".mjs"))) {
           return [fullPath];
         }
 
         return [];
-      })
+      }),
     );
 
     return files.flat();

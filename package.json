@@ -10,12 +10,12 @@
   "bugs": {
     "url": "https://github.com/AroxBot/framework/issues"
   },
+  "license": "Apache-2.0",
+  "author": "vrdons",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AroxBot/framework.git"
   },
-  "license": "Apache-2.0",
-  "author": "vrdons",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,11 +25,13 @@
     "format": "oxfmt",
     "build:js": "swc src -d dist --strip-leading-paths --copy-files",
     "build:dts": "tsc --emitDeclarationOnly",
-    "build": "npm run build:js && node ./scripts/actions/patch.js && npm run build:dts"
+    "build": "npm run build:js && node ./scripts/actions/patch.js && npm run build:dts",
+    "release:git": "node scripts/actions/github.js"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.10",
     "@types/node": "^25.0.8",
+    "libnpmpack": "^9.0.12",
     "oxfmt": "^0.24.0",
     "oxlint": "^1.39.0",
     "oxlint-tsgolint": "^0.11.0",
