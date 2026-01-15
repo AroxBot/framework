@@ -1,4 +1,4 @@
-name: Check Pull Requests
+name: Check Code
 
 on:
   pull_request:
@@ -22,7 +22,7 @@ jobs:
           node-version: "25"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Check Compatibility
         run: npm run check
