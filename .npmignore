@@ -1,6 +1,12 @@
+# Github
+.github
+CHANGELOG.md
+cargo.toml
+
 # Build
 src
 scripts
-
-oxfmtrc.json
+tsconfig.json
+.oxfmtrc.json
 package-lock.json
+.swcrc

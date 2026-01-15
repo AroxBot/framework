@@ -1,6 +1,7 @@
 const { existsSync, appendFileSync, writeFileSync } = require("node:fs");
 const { homedir } = require("node:os");
 const { join } = require("node:path");
+const { exec } = require("./util");
 
 const NPM_URL = "https://registry.npmjs.org";
 const GITHUB_URL = "https://npm.pkg.github.com";
@@ -33,7 +34,7 @@ function getNpmDistTag(version) {
 
 function checkVersionExists(packageName, version, registry) {
 	try {
-		execSync(`npm view ${packageName}@${version} --registry=${registry}`, {
+		exec(`npm view ${packageName}@${version} --registry=${registry}`, {
 			stdio: "ignore",
 		});
 		return true;

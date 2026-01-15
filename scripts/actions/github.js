@@ -44,8 +44,7 @@ async function buildProject() {
 
 	generateNpmRc(github_token, null);
 
-	const npmVerExists = checkVersionExists(GITHUB_URL, tempjson.name, version);
-
+	const npmVerExists = checkVersionExists(tempjson.name, version, GITHUB_URL);
 	const githubTagExists = tagExists(version);
 
 	let buildPath = null;

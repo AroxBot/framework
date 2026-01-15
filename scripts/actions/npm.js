@@ -1,13 +1,9 @@
 const { exec } = require("../utils/util");
-const {
-	generateNpmRc,
-	checkVersionExists,
-	NPM_URL,
-	getNpmDistTag,
-} = require("../utils/npm");
+const { checkVersionExists, NPM_URL, getNpmDistTag } = require("../utils/npm");
 
 const packageJson = require("../../package.json");
 const build = require("../utils/build");
+const { getSha } = require("../utils/github");
 
 async function buildProject() {
 	const owner = process.env.NPM_ORG;
@@ -25,7 +21,6 @@ async function buildProject() {
 	}
 
 	console.log("Starting Npm Release Process");
-	console.log(`Repository: ${owner}/${repo}`);
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
 
