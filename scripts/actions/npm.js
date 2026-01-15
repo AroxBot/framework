@@ -24,9 +24,7 @@ async function buildProject() {
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
 
-	//generateNpmRc(null, npm_token);
-
-	const npmVerExists = checkVersionExists(NPM_URL, tempjson.name, version);
+	const npmVerExists = checkVersionExists(tempjson.name, version, NPM_URL);
 
 	let buildPath = null;
 	let err = false;

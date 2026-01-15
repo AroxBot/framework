@@ -7,7 +7,6 @@ const {
 	createRelease,
 } = require("../utils/github");
 const {
-	generateNpmRc,
 	checkVersionExists,
 	GITHUB_URL,
 	getNpmDistTag,
@@ -41,8 +40,6 @@ async function buildProject() {
 	console.log(`Repository: ${owner}/${repo}`);
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
-
-	generateNpmRc(github_token, null);
 
 	const npmVerExists = checkVersionExists(tempjson.name, version, GITHUB_URL);
 	const githubTagExists = tagExists(version);

@@ -2,6 +2,7 @@
 .github
 CHANGELOG.md
 cargo.toml
+.husky
 
 # Build
 src
