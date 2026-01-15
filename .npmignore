@@ -4,6 +4,9 @@ CHANGELOG.md
 cargo.toml
 .husky
 
+# Test
+examples
+
 # Build
 src
 scripts
