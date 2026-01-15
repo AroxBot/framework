@@ -1,34 +1,26 @@
 const { exec } = require("../utils/util");
 const {
-	getRepoInfo,
-	getSha,
-	tagExists,
-	createTag,
-	createRelease,
-} = require("../utils/github");
-const {
 	generateNpmRc,
 	checkVersionExists,
-	GITHUB_URL,
+	NPM_URL,
 	getNpmDistTag,
 } = require("../utils/npm");
 
 const packageJson = require("../../package.json");
 const build = require("../utils/build");
-const { generateChangelog } = require("../utils/util");
 
 async function buildProject() {
-	const github_token = process.env.GITHUB_TOKEN;
-	if (!github_token) {
-		throw new Error("Github Token Not Found");
+	const npm_token = process.env.NPM_TOKEN;
+	if (!npm_token) {
+		throw new Error("NPM Token Not Found");
 	}
 
-	const { owner, repo } = getRepoInfo();
+	const owner = process.env.NPM_ORG;
 	const sha = getSha();
 
 	const tempjson = {
 		...packageJson,
-		name: `@${owner}/${packageJson.name}`,
+		name: owner ? `@${owner}/${packageJson.name}` : packageJson.name,
 	};
 
 	const version = tempjson.version;
@@ -37,37 +29,17 @@ async function buildProject() {
 		throw new Error("package.json version not found");
 	}
 
-	console.log("Starting GitHub Release Process");
+	console.log("Starting Npm Release Process");
 	console.log(`Repository: ${owner}/${repo}`);
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
 
-	generateNpmRc(github_token, null);
+	generateNpmRc(null, npm_token);
 
-	const npmVerExists = checkVersionExists(GITHUB_URL, tempjson.name, version);
-
-	const githubTagExists = tagExists(version);
+	const npmVerExists = checkVersionExists(NPM_URL, tempjson.name, version);
 
 	let buildPath = null;
 	let err = false;
-
-	if (githubTagExists) {
-		console.log(`Tag (git) ${version} already exists`);
-	} else {
-		try {
-			console.log(`Git tag ${version} does not exist`);
-
-			buildPath ??= await build(tempjson);
-
-			createTag(version, sha);
-
-			const changelog = generateChangelog(version);
-			await createRelease(version, buildPath, changelog);
-		} catch (error) {
-			console.log(error);
-			err = true;
-		}
-	}
 
 	if (npmVerExists) {
 		console.log(`Version (npm) ${version} already exists`);
@@ -79,7 +51,7 @@ async function buildProject() {
 
 			const distTag = getNpmDistTag(version);
 			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
-			exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}${tagArg}`, {
+			exec(`npm publish "${buildPath}" --registry=${NPM_URL}${tagArg}`, {
 				stdio: "inherit",
 			});
 		} catch (error) {

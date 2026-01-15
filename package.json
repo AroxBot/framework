@@ -26,7 +26,8 @@
 		"build:js": "swc src -d dist --strip-leading-paths --copy-files",
 		"build:dts": "tsc --emitDeclarationOnly",
 		"build": "npm run build:js && node ./scripts/actions/patch.js && npm run build:dts",
-		"release:git": "node scripts/actions/github.js"
+		"release:git": "node scripts/actions/github.js",
+		"release:npm": "node scripts/actions/npm.js"
 	},
 	"devDependencies": {
 		"@swc/cli": "^0.7.10",
