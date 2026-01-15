@@ -10,6 +10,7 @@ const {
 	generateNpmRc,
 	checkVersionExists,
 	GITHUB_URL,
+  getNpmDistTag,
 } = require("../utils/npm");
 
 const packageJson = require("../../package.json");
@@ -51,6 +52,7 @@ async function buildProject() {
 	const githubTagExists = tagExists(version);
 
 	let buildPath = null;
+  let err = false;
 
 	if (githubTagExists) {
 		console.log(`Tag (git) ${version} already exists`);
@@ -66,6 +68,7 @@ async function buildProject() {
 			await createRelease(version, buildPath, changelog);
 		} catch (error) {
 			console.log(error);
+      err = true;
 		}
 	}
 
@@ -77,12 +80,17 @@ async function buildProject() {
 
 			buildPath ??= await build(tempjson);
 
-			exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}`, {
+      const distTag = getNpmDistTag(version);
+      const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
+			exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}${tagArg}`, {
 				stdio: "inherit",
 			});
 		} catch (error) {
 			console.log(error);
+      err = true;
 		}
+
+    if(err) throw new Error("Failed to publish")
 	}
 }
 
