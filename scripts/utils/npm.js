@@ -1,5 +1,6 @@
 const { existsSync, appendFileSync, writeFileSync } = require("node:fs");
 const { homedir } = require("node:os");
+const { join } = require("node:path");
 
 const NPM_URL = "https://registry.npmjs.org";
 const GITHUB_URL = "https://npm.pkg.github.com";

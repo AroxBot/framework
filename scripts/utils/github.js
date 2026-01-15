@@ -46,14 +46,16 @@ async function createRelease(version, tgzPath, body = "") {
 
   console.log(`🚀 Creating GitHub Release: ${version}`);
 
+  const prerelease = isPrerelease(version);
+
   const releaseJson = exec(
     `gh api repos/${repo}/releases \
       -X POST \
       -f tag_name=${version} \
       -f name=${version} \
       -f body="${body || `Release ${version}`}" \
-      -f draft=false \
-      -f prerelease=${isPrerelease(version)}`,
+      -F draft=false \
+      -F prerelease=${prerelease}`,
   );
 
   const release = JSON.parse(releaseJson);
@@ -76,4 +78,5 @@ async function createRelease(version, tgzPath, body = "") {
 
   return release;
 }
+
 module.exports = { getRepoInfo, getSha, tagExists, createTag, createRelease };

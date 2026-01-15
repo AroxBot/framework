@@ -1,3 +1,4 @@
+const { exec } = require("../utils/util");
 const { getRepoInfo, getSha, tagExists, createTag, createRelease } = require("../utils/github");
 const { generateNpmRc, checkVersionExists, GITHUB_URL } = require("../utils/npm");
 
@@ -10,31 +11,44 @@ async function buildProject() {
   if (!github_token) {
     throw new Error("Github Token Not Found");
   }
+
   const { owner, repo } = getRepoInfo();
   const sha = getSha();
 
-  let tempjson = packageJson;
-  tempjson.name = `@${owner}/${packageJson.name}`;
+  const tempjson = {
+    ...packageJson,
+    name: `@${owner}/${packageJson.name}`,
+  };
+
+  const version = tempjson.version;
+
+  if (!version) {
+    throw new Error("package.json version not found");
+  }
 
   console.log("Starting GitHub Release Process");
   console.log(`Repository: ${owner}/${repo}`);
-  console.log(`Version: ${tempjson.version}`);
+  console.log(`Version: ${version}`);
+  console.log(`Current commit: ${sha.slice(0, 7)}`);
+
   generateNpmRc(github_token, null);
 
-  console.log(`Current commit: ${sha.slice(0, 7)}`);
-  const npmVerExists = checkVersionExists(GITHUB_URL, tempjson.name, tempjson.version, {
+  const npmVerExists = checkVersionExists(GITHUB_URL, tempjson.name, version, {
     Authorization: `Bearer ${github_token}`,
     Accept: "application/vnd.npm.install-v1+json",
   });
-  const githubTagExists = tagExists(tempjson.version);
+
+  const githubTagExists = tagExists(version);
+
   let buildPath = null;
+
   if (githubTagExists) {
     console.log(`Tag (git) ${version} already exists`);
   } else {
     console.log(`Git tag ${version} does not exist`);
-    if (!buildPath) {
-      buildPath = await build(tempjson);
-    }
+
+    buildPath ??= await build(tempjson);
+
     createTag(version, sha);
 
     const changelog = generateChangelog(version);
@@ -45,10 +59,12 @@ async function buildProject() {
     console.log(`Version (npm) ${version} already exists`);
   } else {
     console.log(`npm version ${version} does not exist`);
-    if (!buildPath) {
-      buildPath = await build(tempjson);
-    }
-    exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}`);
+
+    buildPath ??= await build(tempjson);
+
+    exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}`, {
+      stdio: "inherit",
+    });
   }
 }
 
