@@ -41,9 +41,12 @@ async function buildProject() {
 
 			const distTag = getNpmDistTag(version);
 			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
-			exec(`npm publish "${buildPath}" --provenance --registry=${NPM_URL}${tagArg}`, {
-				stdio: "inherit",
-			});
+			exec(
+				`npm publish "${buildPath}" --provenance --registry=${NPM_URL}${tagArg}`,
+				{
+					stdio: "inherit",
+				}
+			);
 		} catch (error) {
 			console.log(error);
 			err = true;

@@ -20,6 +20,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"prepare": "node scripts/prepareHusky.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"check": "oxfmt --check && oxlint --type-aware --type-check",
 		"format": "oxfmt",
@@ -32,6 +33,7 @@
 	"devDependencies": {
 		"@swc/cli": "^0.7.10",
 		"@types/node": "^25.0.8",
+		"husky": "^9.1.7",
 		"libnpmpack": "^9.0.12",
 		"oxfmt": "^0.24.0",
 		"oxlint": "^1.39.0",
