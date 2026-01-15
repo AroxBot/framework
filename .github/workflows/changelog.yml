@@ -36,5 +36,5 @@ jobs:
           git add CHANGELOG.md
           git diff --cached --quiet && exit 0
 
-          git commit -m "chore(changelog): weekly update"
+          git commit -m "Update changelog"
           git push origin main
