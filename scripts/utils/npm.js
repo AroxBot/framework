@@ -1,6 +1,11 @@
+const { existsSync, appendFileSync, writeFileSync } = require("node:fs");
+const { homedir } = require("node:os");
+
 const NPM_URL = "https://registry.npmjs.org";
 const GITHUB_URL = "https://npm.pkg.github.com";
 
+
+const npmrcPath = join(homedir(), '.npmrc');
 function generateNpmRc(githubToken, npmToken) {
   let line = "";
   if (githubToken) line = `${GITHUB_URL.replace("https:")}/:_authToken=${githubToken}\n`;

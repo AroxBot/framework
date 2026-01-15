@@ -12,14 +12,16 @@ async function buildProject() {
   }
   const { owner, repo } = getRepoInfo();
   const sha = getSha();
+
+  let tempjson = packageJson;
+  tempjson.name = `@${owner}/${packageJson.name}`;
+
   console.log("Starting GitHub Release Process");
   console.log(`Repository: ${owner}/${repo}`);
-  console.log(`Version: ${version}`);
+  console.log(`Version: ${tempjson.version}`);
   generateNpmRc(github_token, null);
 
   console.log(`Current commit: ${sha.slice(0, 7)}`);
-  let tempjson = packageJson;
-  tempjson.name = `@${owner}/${packageJson.name}`;
   const npmVerExists = checkVersionExists(GITHUB_URL, tempjson.name, tempjson.version, {
     Authorization: `Bearer ${github_token}`,
     Accept: "application/vnd.npm.install-v1+json",
