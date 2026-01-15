@@ -1,4 +1,5 @@
 const { exec } = require("./util");
+const path = require("node:path");
 
 function isPrerelease(version) {
   return /alpha|beta|rc/i.test(version);

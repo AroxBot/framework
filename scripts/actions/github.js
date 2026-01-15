@@ -45,26 +45,34 @@ async function buildProject() {
   if (githubTagExists) {
     console.log(`Tag (git) ${version} already exists`);
   } else {
-    console.log(`Git tag ${version} does not exist`);
+    try {
+      console.log(`Git tag ${version} does not exist`);
 
-    buildPath ??= await build(tempjson);
+      buildPath ??= await build(tempjson);
 
-    createTag(version, sha);
+      createTag(version, sha);
 
-    const changelog = generateChangelog(version);
-    await createRelease(version, buildPath, changelog);
+      const changelog = generateChangelog(version);
+      await createRelease(version, buildPath, changelog);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   if (npmVerExists) {
     console.log(`Version (npm) ${version} already exists`);
   } else {
-    console.log(`npm version ${version} does not exist`);
+    try {
+      console.log(`npm version ${version} does not exist`);
 
-    buildPath ??= await build(tempjson);
+      buildPath ??= await build(tempjson);
 
-    exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}`, {
-      stdio: "inherit",
-    });
+      exec(`npm publish "${buildPath}" --registry=${GITHUB_URL}`, {
+        stdio: "inherit",
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 
