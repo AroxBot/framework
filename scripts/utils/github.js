@@ -1,3 +1,4 @@
+const { writeFileSync } = require("node:fs");
 const { exec } = require("./util");
 const path = require("node:path");
 
@@ -41,6 +42,7 @@ function createTag(tag, sha) {
 		{ stdio: "inherit" }
 	);
 }
+
 async function createRelease(version, tgzPath, body = "") {
 	const repo = process.env.GITHUB_REPOSITORY;
 	if (!repo) throw new Error("GITHUB_REPOSITORY not found");
@@ -49,14 +51,19 @@ async function createRelease(version, tgzPath, body = "") {
 
 	const prerelease = isPrerelease(version);
 
+	const payload = {
+		tag_name: version,
+		name: version,
+		body: body || `Release ${version}`,
+		draft: false,
+		prerelease,
+	};
+
+	const tmp = ".release.json";
+	writeFileSync(tmp, JSON.stringify(payload));
+
 	const releaseJson = exec(
-		`gh api repos/${repo}/releases \
-      -X POST \
-      -f tag_name=${version} \
-      -f name=${version} \
-      -f body="${body || `Release ${version}`}" \
-      -F draft=false \
-      -F prerelease=${prerelease}`
+		`gh api repos/${repo}/releases -X POST --input ${tmp}`
 	);
 
 	const release = JSON.parse(releaseJson);
@@ -68,10 +75,9 @@ async function createRelease(version, tgzPath, body = "") {
 		console.log(`Uploading asset: ${resolved}`);
 
 		exec(
-			`gh api ${release.upload_url.replace(/\{.*$/, "")} \
+			`gh api "${release.upload_url.replace(/\{.*$/, "")}?name=install.tgz" \
         -X POST \
         -H "Content-Type: application/gzip" \
-        -f name=install.tgz \
         --input "${resolved}"`,
 			{ stdio: "inherit" }
 		);
