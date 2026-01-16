@@ -5,6 +5,7 @@ export * from "./structures/Event";
 export * from "./structures/Argument";
 export * from "./handlers/CommandHandler";
 export * from "./handlers/EventHandler";
-export * from "./utils/Logger";
+export * from "./handlers/Deployer";
 export * from "./types";
+export * from "./utils/Logger";
 export const version = "[VI]{{version}}[/VI]";

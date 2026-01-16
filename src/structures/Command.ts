@@ -31,5 +31,14 @@ export abstract class Command {
 		this.supportsPrefix = options.prefix ?? true;
 	}
 
+	public toJSON(): any {
+		return {
+			name: this.name,
+			description: this.description,
+			type: 1, // ChatInput
+			options: this.options,
+		};
+	}
+
 	public abstract execute(ctx: Context): Promise<any>;
 }

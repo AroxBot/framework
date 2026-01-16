@@ -3,6 +3,7 @@ import { LoggerInstance } from "../utils/Logger";
 import { Command } from "./Command";
 import { CommandHandler } from "../handlers/CommandHandler";
 import { EventHandler } from "../handlers/EventHandler";
+import { Deployer } from "../handlers/Deployer";
 import { ClientOptionsWithFramework } from "../types";
 import path from "path";
 
@@ -14,6 +15,7 @@ export class Client extends DiscordClient {
 
 	public readonly commandHandler: CommandHandler;
 	public readonly eventHandler: EventHandler;
+	public readonly deployer: Deployer;
 
 	constructor(opts: ClientOptionsWithFramework) {
 		super(opts);
@@ -26,6 +28,7 @@ export class Client extends DiscordClient {
 
 		this.commandHandler = new CommandHandler(this);
 		this.eventHandler = new EventHandler(this);
+		this.deployer = new Deployer(this);
 
 		this.on("messageCreate", (msg) => this.commandHandler.handleMessage(msg));
 		this.on("interactionCreate", (int) =>

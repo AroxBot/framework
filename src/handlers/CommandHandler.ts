@@ -1,7 +1,7 @@
 import { Client } from "../structures/Client";
 import { Command } from "../structures/Command";
 import { Context } from "../structures/Context";
-import { Interaction, Message, REST, Routes } from "discord.js";
+import { Interaction, Message } from "discord.js";
 import fs from "fs";
 import path from "path";
 
@@ -36,32 +36,6 @@ export class CommandHandler {
 			}
 		}
 		this.client.logger.log(`Loaded ${this.client.commands.size} commands.`);
-	}
-
-	public async registerCommands() {
-		if (!this.client.token || !this.client.application) return;
-
-		const slashCommands = this.client.commands
-			.filter((cmd) => cmd.supportsSlash)
-			.map((cmd) => ({
-				name: cmd.name,
-				description: cmd.description,
-				options: cmd.options,
-			}));
-
-		const rest = new REST({ version: "10" }).setToken(this.client.token);
-
-		try {
-			this.client.logger.log(
-				`Started refreshing ${slashCommands.length} application (/) commands.`
-			);
-			await rest.put(Routes.applicationCommands(this.client.application.id), {
-				body: slashCommands,
-			});
-			this.client.logger.log(`Successfully reloaded application (/) commands.`);
-		} catch (error) {
-			this.client.logger.error("Failed to register commands:", error);
-		}
 	}
 
 	public async handleMessage(message: Message) {
