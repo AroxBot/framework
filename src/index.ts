@@ -3,5 +3,8 @@ export * from "./structures/Command";
 export * from "./structures/Context";
 export * from "./structures/Event";
 export * from "./structures/Argument";
+export * from "./handlers/CommandHandler";
+export * from "./handlers/EventHandler";
 export * from "./utils/Logger";
+export * from "./types";
 export const version = "[VI]{{version}}[/VI]";

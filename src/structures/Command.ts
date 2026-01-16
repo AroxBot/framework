@@ -2,15 +2,7 @@ import { ApplicationCommandOptionData } from "discord.js";
 import { Context } from "./Context";
 import { Client } from "./Client";
 import { Argument } from "./Argument";
-
-export interface CommandOptions {
-	name: string;
-	description: string;
-	aliases?: string[];
-	options?: (ApplicationCommandOptionData | Argument)[];
-	slash?: boolean; // Default true
-	prefix?: boolean; // Default true (if user enabled prefix generally)
-}
+import { CommandOptions } from "../types";
 
 export abstract class Command {
 	public readonly client: Client;
