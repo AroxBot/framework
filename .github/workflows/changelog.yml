@@ -2,7 +2,7 @@ name: Generate Changelog
 
 on:
   schedule:
-    - cron: "0 3 * * 1"
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 jobs:
@@ -37,4 +37,4 @@ jobs:
           git diff --cached --quiet && exit 0
 
           git commit -m "Update changelog"
-          git push origin main
+          git push origin changelog
