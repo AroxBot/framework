@@ -1,102 +1,82 @@
 import {
 	Client as DiscordClient,
-	ClientOptions,
 	Collection,
-	Interaction,
-	Message,
 	REST,
 	Routes,
+	IntentsBitField,
 } from "discord.js";
-import { LoggerInstance, LogLevel } from "../utils/Logger";
+import { LoggerInstance } from "../utils/Logger";
 import { Command } from "./Command";
-import { Context } from "./Context";
-import { Event } from "./Event";
 import path from "path";
 import { getFiles, getProjectRoot } from "../utils/Files";
+import { FrameworkOptions, PrefixOptions } from "#types/client.js";
+import { merge } from "lodash";
+import { setClient } from "../context";
+import { getPrefix } from "../utils/util";
 
-export interface ClientOptionsWithFramework extends ClientOptions {
-	logLevel?: LogLevel;
-	prefix?: string;
-	token?: string;
-}
+const defaultOpts: Omit<FrameworkOptions, "intents"> = {
+	paths: {
+		events: "events",
+		commands: "commands",
+	},
+};
 
 export class Client extends DiscordClient {
 	public readonly logger: LoggerInstance;
-	public readonly commands: Collection<string, Command>;
-	public readonly aliases: Collection<string, string>;
-	public readonly prefix: string;
+	public commands: Collection<string, Command>;
+	public aliases: Collection<string, Set<string>>;
+	declare public options: Omit<FrameworkOptions, "intents"> & {
+		intents: IntentsBitField;
+	};
 
-	constructor(opts: ClientOptionsWithFramework) {
-		super(opts);
-		this.logger = new LoggerInstance(opts.logLevel ?? "log");
+	constructor(opts: FrameworkOptions) {
+		super(merge(defaultOpts, opts) as FrameworkOptions);
+		this.logger = new LoggerInstance(this.options.logLevel ?? "log");
 		this.commands = new Collection();
 		this.aliases = new Collection();
-		this.prefix = opts.prefix ?? "!";
+		this.options.prefix = getPrefix(
+			this.options.prefix ?? { enabled: false }
+		) as PrefixOptions;
 
-		if (opts.token) this.token = opts.token;
-
-		this.on("messageCreate", this.handleMessage.bind(this));
-		this.on("interactionCreate", this.handleInteraction.bind(this));
-		const eventsPath = path.join(getProjectRoot(), "events");
-
-		this.loadEvents(eventsPath).catch((error) =>
-			this.logger.error("Error loading events:", error)
-		);
-	}
-
-	public async loadCommands(dir: string) {
-		const files = getFiles(dir);
-		for (const file of files) {
-			try {
-				delete require.cache[require.resolve(file)];
-				const { default: CommandClass } = await require(file);
-
-				if (!CommandClass || !(CommandClass.prototype instanceof Command)) {
-					continue;
-				}
-
-				const command: Command = new CommandClass(this);
-				this.commands.set(command.name, command);
-
-				for (const alias of command.aliases) {
-					this.aliases.set(alias, command.name);
-				}
-
-				this.logger.debug(`Loaded command: ${command.name}`);
-			} catch (error) {
-				this.logger.error(`Error loading command ${file}:`, error);
-			}
+		if (this.options.paths?.events) {
+			this.loadFiles(
+				path.join(getProjectRoot(), this.options.paths?.events)
+			).catch((error) => this.logger.error("Error loading events:", error));
 		}
-		this.logger.log(`Loaded ${this.commands.size} commands.`);
+
+		setClient(this);
+		require("../handler/interaction");
 	}
 
-	public async loadEvents(dir: string) {
+	async loadFiles(dir: string) {
 		const files = getFiles(dir);
 		for (const file of files) {
-			try {
-				delete require.cache[require.resolve(file)];
-				const { default: EventClass } = await require(file);
+			await this.loadFile(file);
+		}
+	}
 
-				if (!EventClass || !(EventClass.prototype instanceof Event)) {
-					continue;
-				}
+	async loadFile(file: string) {
+		try {
+			delete require.cache[require.resolve(file)];
+			setClient(this);
 
-				const event: Event<any> = new EventClass(this);
-				if (event.once) {
-					this.once(event.name, (...args) => event.execute(...args));
-				} else {
-					this.on(event.name, (...args) => event.execute(...args));
-				}
-
-				this.logger.debug(`Loaded event: ${event.name}`);
-			} catch (error) {
-				this.logger.error(`Error loading event ${file}:`, error);
-			}
+			await require(file);
+		} catch (error) {
+			this.logger.error(`Error loading file ${file}:`, error);
 		}
 	}
 
 	public async registerCommands() {
-		if (!this.token || !this.application) return;
+		if (!this.token) {
+			this.logger.warn("registerCommands skipped: client token is not set.");
+			return;
+		}
+		if (!this.application) {
+			this.logger.warn(
+				"registerCommands skipped: client application is not ready."
+			);
+			return;
+		}
 
 		const slashCommands = this.commands
 			.filter((cmd) => cmd.supportsSlash)
@@ -118,60 +98,6 @@ export class Client extends DiscordClient {
 			this.logger.log(`Successfully reloaded application (/) commands.`);
 		} catch (error) {
 			this.logger.error("Failed to register commands:", error);
-		}
-	}
-
-	private async handleMessage(message: Message) {
-		if (message.author.bot) return;
-		if (!message.content.startsWith(this.prefix)) return;
-
-		const args = message.content.slice(this.prefix.length).trim().split(/ +/);
-		const commandName = args.shift()?.toLowerCase();
-
-		if (!commandName) return;
-
-		const name = this.aliases.get(commandName) || commandName;
-		const command = this.commands.get(name);
-
-		if (!command || !command.supportsPrefix) return;
-
-		try {
-			const context = new Context(this, { message, args });
-			await command.execute(context);
-		} catch (error) {
-			this.logger.error(`Error executing command ${command.name}:`, error);
-			await message.reply("There was an error trying to execute that command!");
-		}
-	}
-
-	private async handleInteraction(interaction: Interaction) {
-		if (!interaction.isCommand()) return;
-
-		const command = this.commands.get(interaction.commandName);
-		if (!command || !command.supportsSlash) {
-			await interaction.reply({
-				content: "Command not found or disabled.",
-				ephemeral: true,
-			});
-			return;
-		}
-
-		try {
-			const context = new Context(this, { interaction });
-			await command.execute(context);
-		} catch (error) {
-			this.logger.error(`Error executing command ${command.name}:`, error);
-			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({
-					content: "There was an error while executing this command!",
-					ephemeral: true,
-				});
-			} else {
-				await interaction.reply({
-					content: "There was an error while executing this command!",
-					ephemeral: true,
-				});
-			}
 		}
 	}
 }

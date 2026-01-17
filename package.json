@@ -19,6 +19,9 @@
 	"type": "commonjs",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"imports": {
+		"#types/*": "./types/*"
+	},
 	"scripts": {
 		"prepare": "node scripts/prepareHusky.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
@@ -32,10 +35,12 @@
 	},
 	"dependencies": {
 		"chalk": "^4.1.2",
-		"fast-glob": "^3.3.3"
+		"fast-glob": "^3.3.3",
+		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
 		"@swc/cli": "^0.7.10",
+		"@types/lodash": "^4.17.23",
 		"@types/node": "^25.0.8",
 		"husky": "^9.1.7",
 		"libnpmpack": "^9.0.12",
