@@ -21,7 +21,9 @@ const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	},
 };
 
-export class Client extends DiscordClient {
+export class Client<
+	Ready extends boolean = boolean,
+> extends DiscordClient<Ready> {
 	public readonly logger: LoggerInstance;
 	public commands: Collection<string, Command>;
 	public aliases: Collection<string, Set<string>>;
@@ -46,6 +48,7 @@ export class Client extends DiscordClient {
 
 		setClient(this);
 		require("../handler/interaction");
+		if (this.options.prefix) require("../handler/message");
 	}
 
 	async loadFiles(dir: string) {

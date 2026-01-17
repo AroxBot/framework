@@ -2,7 +2,6 @@ import {
 	Message,
 	Guild,
 	User,
-	TextBasedChannel,
 	InteractionReplyOptions,
 	MessageReplyOptions,
 	CommandInteraction,
@@ -35,31 +34,15 @@ export class Context {
 		this.args = data.args ?? [];
 	}
 
-	public get author(): User {
-		return this.interaction?.user ?? this.message!.author;
+	public get author(): User | null {
+		return this.interaction?.user ?? this.message?.author ?? null;
 	}
 
 	public get guild(): Guild | null {
-		return this.interaction?.guild ?? this.message!.guild;
+		return this.interaction?.guild ?? this.message?.guild ?? null;
 	}
 
-	public get channel(): TextBasedChannel | null {
-		return (this.interaction?.channel ??
-			this.message?.channel) as TextBasedChannel;
-	}
-
-	public async reply(options: ReplyOptions): Promise<any> {
-		if (this.interaction) {
-			if (this.interaction.replied || this.interaction.deferred) {
-				return this.interaction.followUp(options as InteractionReplyOptions);
-			}
-			return this.interaction.reply(options as InteractionReplyOptions);
-		}
-		return this.message!.reply(options as MessageReplyOptions);
-	}
-
-	public async send(options: ReplyOptions): Promise<Message | undefined> {
-		const channel = this.channel as any;
-		return channel?.send(options);
+	public get channel() {
+		return this.interaction?.channel ?? this.message?.channel;
 	}
 }
