@@ -31,7 +31,8 @@
 		"release:npm": "node scripts/actions/npm.js"
 	},
 	"dependencies": {
-		"chalk": "^4.1.2"
+		"chalk": "^4.1.2",
+		"fast-glob": "^3.3.3"
 	},
 	"devDependencies": {
 		"@swc/cli": "^0.7.10",

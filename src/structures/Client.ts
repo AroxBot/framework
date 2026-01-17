@@ -11,8 +11,8 @@ import { LoggerInstance, LogLevel } from "../utils/Logger";
 import { Command } from "./Command";
 import { Context } from "./Context";
 import { Event } from "./Event";
-import fs from "fs";
 import path from "path";
+import { getFiles, getProjectRoot } from "../utils/Files";
 
 export interface ClientOptionsWithFramework extends ClientOptions {
 	logLevel?: LogLevel;
@@ -37,22 +37,22 @@ export class Client extends DiscordClient {
 
 		this.on("messageCreate", this.handleMessage.bind(this));
 		this.on("interactionCreate", this.handleInteraction.bind(this));
+		const eventsPath = path.join(getProjectRoot(), "events");
 
-		// Auto-load events
-		this.loadEvents(path.join(__dirname, "..", "events")).catch((error) =>
+		this.loadEvents(eventsPath).catch((error) =>
 			this.logger.error("Error loading events:", error)
 		);
 	}
 
 	public async loadCommands(dir: string) {
-		const files = this.getFiles(dir);
+		const files = getFiles(dir);
 		for (const file of files) {
 			try {
 				delete require.cache[require.resolve(file)];
 				const { default: CommandClass } = await require(file);
 
 				if (!CommandClass || !(CommandClass.prototype instanceof Command)) {
-					continue; // Skip non-command files
+					continue;
 				}
 
 				const command: Command = new CommandClass(this);
@@ -71,7 +71,7 @@ export class Client extends DiscordClient {
 	}
 
 	public async loadEvents(dir: string) {
-		const files = this.getFiles(dir);
+		const files = getFiles(dir);
 		for (const file of files) {
 			try {
 				delete require.cache[require.resolve(file)];
@@ -93,20 +93,6 @@ export class Client extends DiscordClient {
 				this.logger.error(`Error loading event ${file}:`, error);
 			}
 		}
-	}
-
-	private getFiles(dir: string, fileList: string[] = []): string[] {
-		if (!fs.existsSync(dir)) return [];
-		const files = fs.readdirSync(dir);
-		for (const file of files) {
-			const filePath = path.join(dir, file);
-			if (fs.statSync(filePath).isDirectory()) {
-				this.getFiles(filePath, fileList);
-			} else if (file.endsWith(".ts") || file.endsWith(".js")) {
-				fileList.push(filePath);
-			}
-		}
-		return fileList;
 	}
 
 	public async registerCommands() {
