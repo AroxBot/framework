@@ -1,48 +1,61 @@
-import {
-	Message,
-	Guild,
-	User,
-	InteractionReplyOptions,
-	MessageReplyOptions,
-	CommandInteraction,
-} from "discord.js";
-import { Client } from "./Client";
+import { Message, User, ChatInputCommandInteraction } from "discord.js";
+import { Client } from "../structures/Client";
 
-export type ReplyOptions =
-	| string
-	| MessageReplyOptions
-	| InteractionReplyOptions;
+type ContextPayload<T extends ChatInputCommandInteraction | Message> =
+	T extends ChatInputCommandInteraction
+		? { interaction: T; args?: string[] }
+		: { message: T; args?: string[] };
 
-export class Context {
+export class Context<T extends ChatInputCommandInteraction | Message> {
 	public readonly client: Client;
-	public readonly interaction?: CommandInteraction;
-	public readonly message?: Message;
 	public readonly args: string[];
+	public readonly data: T;
 
-	constructor(
-		client: Client,
-		data:
-			| { interaction: CommandInteraction; message?: never; args?: string[] }
-			| { message: Message; interaction?: never; args?: string[] }
-	) {
-		if (!data.interaction && !data.message) {
-			throw new Error("Context requires either interaction or message");
-		}
+	constructor(client: Client, payload: ContextPayload<T>) {
 		this.client = client;
-		this.interaction = data.interaction;
-		this.message = data.message;
-		this.args = data.args ?? [];
+		this.args = payload.args ?? [];
+
+		if ("interaction" in payload) {
+			this.data = payload.interaction as T;
+		} else {
+			this.data = payload.message as T;
+		}
+	}
+
+	public isInteraction(): this is Context<ChatInputCommandInteraction> {
+		return this.data instanceof ChatInputCommandInteraction;
+	}
+
+	public isMessage(): this is Context<Message> {
+		return this.data instanceof Message;
 	}
 
 	public get author(): User | null {
-		return this.interaction?.user ?? this.message?.author ?? null;
+		if (this.isInteraction()) {
+			return this.data.user;
+		}
+		if (this.isMessage()) {
+			return this.data.author;
+		}
+		return null;
 	}
 
-	public get guild(): Guild | null {
-		return this.interaction?.guild ?? this.message?.guild ?? null;
-	}
+	toJSON() {
+		const { data, args, author } = this;
 
-	public get channel() {
-		return this.interaction?.channel ?? this.message?.channel;
+		if (this.isInteraction()) {
+			return {
+				kind: "interaction" as const,
+				interaction: data,
+				author: author,
+			};
+		}
+
+		return {
+			kind: "message" as const,
+			message: data as Message,
+			args: args,
+			author: author,
+		};
 	}
 }

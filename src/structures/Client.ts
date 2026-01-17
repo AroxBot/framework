@@ -6,10 +6,10 @@ import {
 	IntentsBitField,
 } from "discord.js";
 import { LoggerInstance } from "../utils/Logger";
-import { Command } from "./Command";
+import { CommandBuilder } from "./Command";
 import path from "path";
 import { getFiles, getProjectRoot } from "../utils/Files";
-import { FrameworkOptions, PrefixOptions } from "#types/client.js";
+import { FrameworkOptions } from "#types/client.js";
 import { merge } from "lodash";
 import { setClient } from "../context";
 import { getPrefix } from "../utils/util";
@@ -19,26 +19,27 @@ const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 		events: "events",
 		commands: "commands",
 	},
+	autoRegiserCommands: true,
 };
 
 export class Client<
 	Ready extends boolean = boolean,
 > extends DiscordClient<Ready> {
 	public readonly logger: LoggerInstance;
-	public commands: Collection<string, Command>;
+	public commands: Collection<string, CommandBuilder>;
 	public aliases: Collection<string, Set<string>>;
+	public readonly prefix: string | boolean;
+
 	declare public options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
 	};
 
 	constructor(opts: FrameworkOptions) {
-		super(merge(defaultOpts, opts) as FrameworkOptions);
+		super(merge({}, defaultOpts, opts) as FrameworkOptions);
 		this.logger = new LoggerInstance(this.options.logLevel ?? "log");
 		this.commands = new Collection();
 		this.aliases = new Collection();
-		this.options.prefix = getPrefix(
-			this.options.prefix ?? { enabled: false }
-		) as PrefixOptions;
+		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
 
 		if (this.options.paths?.events) {
 			this.loadFiles(
@@ -47,8 +48,9 @@ export class Client<
 		}
 
 		setClient(this);
+		require("../handler/ready");
 		require("../handler/interaction");
-		if (this.options.prefix) require("../handler/message");
+		if (this.prefix) require("../handler/message");
 	}
 
 	async loadFiles(dir: string) {
@@ -82,7 +84,7 @@ export class Client<
 		}
 
 		const slashCommands = this.commands
-			.filter((cmd) => cmd.supportsSlash)
+			.filter((cmd) => cmd._supportsSlash)
 			.map((cmd) => ({
 				name: cmd.name,
 				description: cmd.description,
@@ -92,13 +94,15 @@ export class Client<
 		const rest = new REST({ version: "10" }).setToken(this.token);
 
 		try {
-			this.logger.log(
+			this.logger.debug(
 				`Started refreshing ${slashCommands.length} application (/) commands.`
 			);
 			await rest.put(Routes.applicationCommands(this.application.id), {
 				body: slashCommands,
 			});
-			this.logger.log(`Successfully reloaded application (/) commands.`);
+			this.logger.warn(
+				`Loaded ${slashCommands.length} application (/) commands.`
+			);
 		} catch (error) {
 			this.logger.error("Failed to register commands:", error);
 		}

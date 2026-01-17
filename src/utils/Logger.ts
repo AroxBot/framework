@@ -1,5 +1,5 @@
+import { LogLevel } from "#types/logger.js";
 import chalk from "chalk";
-export type LogLevel = "debug" | "log" | "warn" | "error";
 
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
 	debug: 0,
