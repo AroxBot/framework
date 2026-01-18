@@ -1,5 +1,9 @@
+# Our
+env.sh
+
 # Build extra
 dist
+
 
 # Logs
 logs

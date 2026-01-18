@@ -5,8 +5,8 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 
-		"module": "CommonJS",
-		"moduleResolution": "Node",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 
 		"target": "esnext",
 
