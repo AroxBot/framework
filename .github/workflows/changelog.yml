@@ -24,8 +24,8 @@ jobs:
         with:
           config: cliff.toml
           args: --verbose
+          output_file: CHANGELOG.md
         env:
-          OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
 
       - name: Checkout or create changelog branch
