@@ -55,7 +55,7 @@ async function createRelease(version, tgzPath, body = "") {
 		tag_name: version,
 		name: version,
 		body: body || `Release ${version}`,
-		draft: false,
+		draft: true,
 		prerelease,
 	};
 
@@ -78,10 +78,11 @@ async function createRelease(version, tgzPath, body = "") {
 			`gh api "${release.upload_url.replace(/\{.*$/, "")}?name=install.tgz" \
         -X POST \
         -H "Content-Type: application/gzip" \
-        --input "${resolved}"`,
-			{ stdio: "inherit" }
+        --input "${resolved}"`
 		);
 	}
+
+	exec(`gh release publish ${version}`);
 
 	return release;
 }
