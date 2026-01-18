@@ -90,4 +90,3 @@ export interface ILogger {
 	 */
 	write(level: LogLevel, ...values: readonly unknown[]): void;
 }
-export default {};

@@ -20,12 +20,12 @@ new EventBuilder(
 		const commandName = args.shift()?.toLowerCase();
 		if (!commandName) return;
 
-		const commandAlias = this.client.aliases.findKey((cmd) =>
+		const commandAlias = context.client.aliases.findKey((cmd) =>
 			cmd.has(commandName)
 		);
 
-		let command = this.client.commands.get(commandAlias ?? commandName);
-		if (!command || !command.supportsPrefix) {
+		let command = context.client.commands.get(commandAlias ?? commandName);
+		if (!command || !command.supportsSlash) {
 			await message
 				.reply({
 					content: "Command not found or disabled.",
@@ -36,13 +36,13 @@ new EventBuilder(
 		}
 
 		try {
-			const context = new Context(this.client, { message, args });
-			this.logger.debug(
-				`${context.author?.tag ?? "Unknown"} used ${command.name}(message)`
+			const ctx = new Context(context.client, { message, args });
+			context.logger.debug(
+				`${ctx.author?.tag ?? "Unknown"} used ${command.name}(message)`
 			);
-			if (command) await command.onMessageCallback(context.toJSON());
+			if (command._onMessage) await command._onMessage(ctx.toJSON());
 		} catch (error) {
-			this.client.logger.error(
+			context.client.logger.error(
 				`Error executing command ${command.name}:`,
 				error
 			);

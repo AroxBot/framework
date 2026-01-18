@@ -19,7 +19,7 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			const ctx = new Context(context.client, { interaction });
 			if (command._onInteraction) await command._onInteraction(ctx.toJSON());
 		} catch (error) {
-			this.client.logger.error(
+			context.client.logger.error(
 				`Error executing command ${command.name}:`,
 				error
 			);

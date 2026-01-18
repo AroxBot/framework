@@ -42,7 +42,7 @@ export class EventBuilder<K extends keyof ClientEvents> {
 			this.register();
 		}
 
-		this.logger.debug(`Loaded Event ${this.name} (${__filename})`);
+		this.logger.debug(`Loaded Event ${String(this.name)}`);
 	}
 
 	private register(): void {

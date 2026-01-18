@@ -58,7 +58,7 @@ export class Logger implements ILogger {
 			options.defaultFormat ?? options.format?.none ?? {}
 		);
 		this.join = options.join ?? " ";
-		this.depth = options.depth ?? 0;
+		this.depth = options.depth ?? 2;
 	}
 
 	static getInstance(): Logger {

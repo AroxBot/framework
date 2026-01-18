@@ -48,10 +48,13 @@ export class Client<
 		}
 
 		setClient(this);
-		require("../events/ready");
-		require("../events/interaction");
-		if (this.prefix) require("../events/message");
-		clearClient();
+		try {
+			require("../events/ready");
+			require("../events/interaction");
+			if (this.prefix) require("../events/message");
+		} finally {
+			clearClient();
+		}
 	}
 
 	async loadFiles(dir: string) {
@@ -69,11 +72,11 @@ export class Client<
 		try {
 			delete require.cache[require.resolve(file)];
 			setClient(this);
-
-			await require(file);
-			clearClient();
+			require(file);
 		} catch (error) {
 			this.logger.error(`Error loading file ${file}:`, error);
+		} finally {
+			clearClient();
 		}
 	}
 
