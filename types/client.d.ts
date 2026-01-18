@@ -1,5 +1,5 @@
 import { ClientOptions } from "discord.js";
-import { LogLevel } from "./logger";
+import { LoggerOptions } from "../src/utils/logger/Logger";
 
 export interface FrameworkPaths {
 	events?: string;
@@ -12,8 +12,8 @@ export type PrefixOptions =
 	| string;
 
 export interface FrameworkOptions extends ClientOptions {
-	logLevel?: LogLevel;
+	logger?: LoggerOptions;
 	prefix?: PrefixOptions;
 	paths?: FrameworkPaths;
-	autoRegiserCommands?: boolean;
+	autoRegisterCommands?: boolean;
 }

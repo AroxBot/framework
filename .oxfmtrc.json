@@ -12,5 +12,6 @@
 
 	"jsxSingleQuote": false,
 	"quoteProps": "as-needed",
-	"embeddedLanguageFormatting": "auto"
+	"embeddedLanguageFormatting": "auto",
+	"endOfLine": "lf"
 }

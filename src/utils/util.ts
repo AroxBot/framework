@@ -7,7 +7,7 @@ export function deleteMessage(
 ) {
 	return new Promise<void>((r) => {
 		setTimeout(() => {
-			message.delete().catch();
+			message.delete().catch(() => {});
 			r();
 		}, time);
 	});
@@ -17,10 +17,8 @@ export function getPrefix(opts: PrefixOptions): string | false {
 		return opts;
 	}
 
-	if (opts && typeof opts === "object") {
-		if (opts.enabled) {
-			return opts.prefix;
-		}
+	if (opts.enabled && opts.prefix) {
+		return opts.prefix;
 	}
 
 	return false;

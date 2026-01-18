@@ -34,8 +34,9 @@
 		"release:npm": "node scripts/actions/npm.js"
 	},
 	"dependencies": {
+		"@sapphire/timestamp": "^1.0.5",
 		"@swc/helpers": "^0.5.18",
-		"chalk": "^4.1.2",
+		"colorette": "^2.0.20",
 		"fast-glob": "^3.3.3",
 		"lodash": "^4.17.21"
 	},

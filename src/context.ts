@@ -6,3 +6,7 @@ export let currentClient: Client | null = null;
 export function setClient(client: Client) {
 	currentClient = client;
 }
+
+export function clearClient() {
+	currentClient = null;
+}

@@ -2,44 +2,64 @@ import { ClientEvents } from "discord.js";
 import { MaybePromise } from "#types/extra.js";
 import { currentClient } from "../context";
 import { Client } from "./Client";
-import { LoggerInstance } from "../utils/Logger";
+import { Logger } from "../utils/logger/Logger";
 
-type EventArgs<K extends keyof ClientEvents | string> =
-	K extends keyof ClientEvents ? ClientEvents[K] : any[];
+type EventArgs<K extends keyof ClientEvents> = ClientEvents[K];
+type EventHandler<K extends keyof ClientEvents> = (
+	context: EventBuilder<K>,
+	...args: EventArgs<K>
+) => MaybePromise<void>;
 
-export class EventBuilder<K extends keyof ClientEvents | string> {
+export class EventBuilder<K extends keyof ClientEvents> {
 	public readonly client: Client;
-	public readonly logger: LoggerInstance;
-	private handler?: (...args: EventArgs<K>) => MaybePromise<void>;
+	public readonly logger: Logger;
+	private handler?: EventHandler<K>;
+	private bound = false;
+
+	private readonly listener = async (...args: EventArgs<K>) => {
+		if (!this.handler) return;
+		try {
+			await this.handler(this, ...args);
+		} catch (error) {
+			this.client.logger.error(
+				`Error executing event ${this.name} (${this.constructor.name}):`,
+				error
+			);
+		}
+	};
 
 	constructor(
 		public readonly name: K,
 		public readonly once: boolean = false,
-		_handler?: (...args: EventArgs<K>) => MaybePromise<void>
+		_handler?: EventHandler<K>
 	) {
 		if (!currentClient) throw new Error("Client is not defined");
 		this.client = currentClient;
 		this.logger = currentClient.logger;
-		if (_handler) this.handler = _handler;
-		this.logger.debug(`Loaded Event ${this.name}(${__filename})`);
 
-		process.nextTick(() => {
-			const wrapper = async (...args: EventArgs<K>) => {
-				if (this.handler) {
-					await this.handler(...args);
-				}
-			};
+		if (_handler) {
+			this.handler = _handler;
+			this.register();
+		}
 
-			if (this.once) {
-				this.client.once(this.name as string, wrapper);
-			} else {
-				this.client.on(this.name as string, wrapper);
-			}
-		});
+		this.logger.debug(`Loaded Event ${this.name} (${__filename})`);
 	}
 
-	public onExecute(func: (...args: EventArgs<K>) => MaybePromise<void>) {
+	private register(): void {
+		if (this.bound || !this.handler) return;
+
+		if (this.once) {
+			this.client.once(this.name as string, this.listener);
+		} else {
+			this.client.on(this.name as string, this.listener);
+		}
+
+		this.bound = true;
+	}
+
+	public onExecute(func: EventHandler<K>) {
 		this.handler = func;
+		this.register();
 		return this;
 	}
 }

@@ -5,7 +5,17 @@ export function getFiles(baseDir: string): string[] {
 	return FastGlob.sync(["**/*.ts", "**/*.js"], {
 		cwd: baseDir,
 		absolute: true,
-		ignore: ["**/*.d.ts", "node_modules/**", ".git/**", "dist/**"],
+		ignore: [
+			"**/*.d.ts",
+			"node_modules/**",
+			".git/**",
+			"dist/**",
+			"lib/**",
+			"out/**",
+			"build/**",
+			".next/**",
+			"coverage/**",
+		],
 	});
 }
 export function getProjectRoot(): string {

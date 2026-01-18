@@ -5,30 +5,30 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { LoggerInstance } from "../utils/Logger";
 import { CommandBuilder } from "./Command";
 import path from "path";
 import { getFiles, getProjectRoot } from "../utils/Files";
 import { FrameworkOptions } from "#types/client.js";
 import { merge } from "lodash";
-import { setClient } from "../context";
+import { clearClient, setClient } from "../context";
 import { getPrefix } from "../utils/util";
+import { Logger } from "../utils/logger/Logger";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	paths: {
 		events: "events",
 		commands: "commands",
 	},
-	autoRegiserCommands: true,
+	autoRegisterCommands: true,
 };
 
 export class Client<
 	Ready extends boolean = boolean,
 > extends DiscordClient<Ready> {
-	public readonly logger: LoggerInstance;
+	public readonly logger: Logger;
 	public commands: Collection<string, CommandBuilder>;
 	public aliases: Collection<string, Set<string>>;
-	public readonly prefix: string | boolean;
+	public readonly prefix: string | false;
 
 	declare public options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
@@ -36,7 +36,7 @@ export class Client<
 
 	constructor(opts: FrameworkOptions) {
 		super(merge({}, defaultOpts, opts) as FrameworkOptions);
-		this.logger = new LoggerInstance(this.options.logLevel ?? "log");
+		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
 		this.aliases = new Collection();
 		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
@@ -48,12 +48,17 @@ export class Client<
 		}
 
 		setClient(this);
-		require("../handler/ready");
-		require("../handler/interaction");
-		if (this.prefix) require("../handler/message");
+		require("../events/ready");
+		require("../events/interaction");
+		if (this.prefix) require("../events/message");
+		clearClient();
 	}
 
 	async loadFiles(dir: string) {
+		if (!require("fs").existsSync(dir)) {
+			this.logger.warn(`Directory not found: ${dir}`);
+			return;
+		}
 		const files = getFiles(dir);
 		for (const file of files) {
 			await this.loadFile(file);
@@ -66,6 +71,7 @@ export class Client<
 			setClient(this);
 
 			await require(file);
+			clearClient();
 		} catch (error) {
 			this.logger.error(`Error loading file ${file}:`, error);
 		}
@@ -84,7 +90,7 @@ export class Client<
 		}
 
 		const slashCommands = this.commands
-			.filter((cmd) => cmd._supportsSlash)
+			.filter((cmd) => cmd.supportsSlash)
 			.map((cmd) => ({
 				name: cmd.name,
 				description: cmd.description,
@@ -100,7 +106,7 @@ export class Client<
 			await rest.put(Routes.applicationCommands(this.application.id), {
 				body: slashCommands,
 			});
-			this.logger.warn(
+			this.logger.info(
 				`Loaded ${slashCommands.length} application (/) commands.`
 			);
 		} catch (error) {
