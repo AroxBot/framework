@@ -25,7 +25,7 @@ new EventBuilder(
 		);
 
 		let command = context.client.commands.get(commandAlias ?? commandName);
-		if (!command || !command.supportsSlash) {
+		if (!command || !command.supportsPrefix) {
 			await message
 				.reply({
 					content: "Command not found or disabled.",
