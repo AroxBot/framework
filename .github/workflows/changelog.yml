@@ -24,14 +24,15 @@ jobs:
         with:
           config: cliff.toml
           args: --verbose
-          output_file: CHANGELOG.md
         env:
+          OUTPUT: CHANGELOG.md
           GITHUB_REPO: ${{ github.repository }}
 
       - name: Checkout or create changelog branch
         run: |
-          git fetch origin changelog || echo "changelog branch yok, oluşturulacak"
-          git checkout -B changelog
+          git fetch origin
+          git checkout -B changelog origin/changelog || git checkout -B changelog
+          git checkout main -- CHANGELOG.md
 
       - name: Commit changelog
         run: |
