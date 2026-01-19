@@ -13,11 +13,14 @@ import { merge } from "lodash";
 import { clearClient, setClient } from "../context";
 import { getPrefix } from "../utils/util";
 import { Logger } from "../utils/logger/Logger";
+import { I18n } from "./I18n";
+
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	paths: {
 		events: "events",
 		commands: "commands",
+		locales: "locales",
 	},
 	autoRegisterCommands: true,
 };
@@ -29,6 +32,7 @@ export class Client<
 	public commands: Collection<string, CommandBuilder>;
 	public aliases: Collection<string, Set<string>>;
 	public readonly prefix: string | false;
+	public readonly i18n: I18n;
 
 	declare public options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
@@ -40,6 +44,13 @@ export class Client<
 		this.commands = new Collection();
 		this.aliases = new Collection();
 		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
+		this.i18n = new I18n(this.options.i18n?.defaultLocale, this.logger);
+
+		if (this.options.paths?.locales) {
+			this.i18n.loadLocales(
+				path.join(getProjectRoot(), this.options.paths.locales)
+			);
+		}
 
 		if (this.options.paths?.events) {
 			this.loadFiles(

@@ -1,10 +1,14 @@
-import { Message, User, ChatInputCommandInteraction } from "discord.js";
+import {
+	Message,
+	User,
+	ChatInputCommandInteraction,
+} from "discord.js";
 import { Client } from "../structures/Client";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
-		? { interaction: T; args?: string[] }
-		: { message: T; args?: string[] };
+	? { interaction: T; args?: string[] }
+	: { message: T; args?: string[] };
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
 	public readonly client: Client;
@@ -22,13 +26,15 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		}
 	}
 
+
 	public isInteraction(): this is Context<ChatInputCommandInteraction> {
-		return this.data instanceof ChatInputCommandInteraction;
+		return "user" in this.data;
 	}
 
 	public isMessage(): this is Context<Message> {
-		return this.data instanceof Message;
+		return "author" in this.data;
 	}
+
 
 	public get author(): User | null {
 		if (this.isInteraction()) {
@@ -40,22 +46,33 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
-	toJSON() {
+	public t(key: string, args?: Record<string, any>) {
+		let locale = this.client.i18n.defaultLocale;
+
+		if (this.isInteraction()) {
+			locale = this.data.locale;
+		}
+
+		return this.client.i18n.t(locale, key, args);
+	}
+
+
+	public toJSON() {
 		const { data, args, author } = this;
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
 				interaction: data,
-				author: author,
+				author,
 			};
 		}
 
 		return {
 			kind: "message" as const,
 			message: data as Message,
-			args: args,
-			author: author,
+			args,
+			author,
 		};
 	}
 }
