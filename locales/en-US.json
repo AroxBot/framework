@@ -1,9 +1,9 @@
 {
-    "hello": "Hello World!",
-    "greeting": "Hello {user}!",
-    "commands": {
-        "ping": {
-            "desc": "Pong!"
-        }
-    }
+	"hello": "Hello World!",
+	"greeting": "Hello {user}!",
+	"commands": {
+		"ping": {
+			"desc": "Pong!"
+		}
+	}
 }

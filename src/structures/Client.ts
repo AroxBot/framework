@@ -15,7 +15,6 @@ import { getPrefix } from "../utils/util";
 import { Logger } from "../utils/logger/Logger";
 import { I18n } from "./I18n";
 
-
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	paths: {
 		events: "events",

@@ -1,14 +1,10 @@
-import {
-	Message,
-	User,
-	ChatInputCommandInteraction,
-} from "discord.js";
+import { Message, User, ChatInputCommandInteraction } from "discord.js";
 import { Client } from "../structures/Client";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
-	? { interaction: T; args?: string[] }
-	: { message: T; args?: string[] };
+		? { interaction: T; args?: string[] }
+		: { message: T; args?: string[] };
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
 	public readonly client: Client;
@@ -26,7 +22,6 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		}
 	}
 
-
 	public isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return "user" in this.data;
 	}
@@ -34,7 +29,6 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	public isMessage(): this is Context<Message> {
 		return "author" in this.data;
 	}
-
 
 	public get author(): User | null {
 		if (this.isInteraction()) {
@@ -55,7 +49,6 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 
 		return this.client.i18n.t(locale, key, args);
 	}
-
 
 	public toJSON() {
 		const { data, args, author } = this;
