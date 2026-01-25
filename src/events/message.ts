@@ -39,6 +39,24 @@ new EventBuilder(
 			context.logger.debug(
 				`${ctx.author?.tag ?? "Unknown"} used ${command.name}(message)`
 			);
+
+			for (const preconditionName of command.preconditions) {
+				const precondition = context.client.preconditions.get(preconditionName);
+				if (!precondition) {
+					context.logger.warn(`Precondition "${preconditionName}" not found for command "${command.name}".`);
+					continue;
+				}
+
+				const result = await precondition.run(ctx);
+				if (!result.ok) {
+					await message.reply({
+						content: result.message,
+						allowedMentions: { repliedUser: false },
+					}).then(deleteMessageAfterSent);
+					return;
+				}
+			}
+
 			if (command._onMessage) await command._onMessage(ctx.toJSON());
 		} catch (error) {
 			context.client.logger.error(

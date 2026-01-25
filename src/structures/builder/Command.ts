@@ -19,6 +19,7 @@ export interface CommandOptions {
 	description: string;
 	aliases?: string[];
 	options?: (ApplicationCommandOptionData | Argument)[];
+	preconditions?: string[],
 	slash?: boolean;
 	prefix?: boolean;
 }
@@ -31,6 +32,7 @@ export class CommandBuilder {
 	public readonly description: string;
 	public readonly aliases: string[];
 	public readonly options: ApplicationCommandOptionData[];
+	public readonly preconditions: string[]
 	private _supportsSlash: boolean;
 	private _supportsPrefix: boolean;
 	public _onMessage?: (ctx: MessageContext) => MaybePromise<void>;
@@ -57,6 +59,7 @@ export class CommandBuilder {
 		});
 		this._supportsPrefix = options.prefix ?? false;
 		this._supportsSlash = options.slash ?? false;
+		this.preconditions = options.preconditions ?? [];
 
 		if (!this._supportsPrefix && !this._supportsSlash) {
 			throw new Error(

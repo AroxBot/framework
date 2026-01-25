@@ -20,6 +20,24 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			context.logger.debug(
 				`${ctx.author?.tag ?? "Unknown"} used ${command.name}(interaction)`
 			);
+
+			for (const preconditionName of command.preconditions) {
+				const precondition = context.client.preconditions.get(preconditionName);
+				if (!precondition) {
+					context.logger.warn(`Precondition "${preconditionName}" not found for command "${command.name}".`);
+					continue;
+				}
+
+				const result = await precondition.run(ctx);
+				if (!result.ok) {
+					await interaction.reply({
+						content: result.message,
+						flags: MessageFlags.Ephemeral,
+					});
+					return;
+				}
+			}
+
 			if (command._onInteraction) await command._onInteraction(ctx.toJSON());
 		} catch (error) {
 			context.client.logger.error(

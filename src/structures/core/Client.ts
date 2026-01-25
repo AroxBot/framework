@@ -5,7 +5,8 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "#structures";
+import { CommandBuilder, PreconditionBuilder } from "#structures";
+
 import path from "path";
 import {
 	getFiles,
@@ -31,7 +32,9 @@ export class Client<
 	public readonly logger: Logger;
 	public commands: Collection<string, CommandBuilder>;
 	public aliases: Collection<string, Set<string>>;
+	public preconditions: Collection<string, PreconditionBuilder>;
 	public readonly prefix: string | false;
+
 	public i18n: i18n | undefined;
 
 	declare public options: Omit<FrameworkOptions, "intents"> & {
@@ -43,7 +46,9 @@ export class Client<
 		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
 		this.aliases = new Collection();
+		this.preconditions = new Collection();
 		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
+
 		if (this.options.i18n) {
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
