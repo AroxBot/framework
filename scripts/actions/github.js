@@ -3,7 +3,6 @@ const {
 	getRepoInfo,
 	getSha,
 	tagExists,
-	//createTag,
 	createRelease,
 } = require("../utils/github");
 const {
@@ -54,8 +53,6 @@ async function buildProject() {
 			console.log(`Git tag ${version} does not exist`);
 
 			buildPath ??= await build(tempjson);
-
-			//createTag(version, sha);
 
 			const changelog = generateChangelog(version);
 			await createRelease(version, buildPath, changelog);

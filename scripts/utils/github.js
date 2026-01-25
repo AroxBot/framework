@@ -54,4 +54,4 @@ async function createRelease(version, tgzPath, body = "") {
 	console.log(`Release ${version} successfully published.`);
 }
 
-module.exports = { getRepoInfo, getSha, tagExists, createTag, createRelease };
+module.exports = { getRepoInfo, getSha, tagExists, createRelease };
