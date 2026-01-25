@@ -1,4 +1,3 @@
-const { writeFileSync } = require("node:fs");
 const { exec } = require("./util");
 const path = require("node:path");
 
@@ -33,14 +32,6 @@ function tagExists(tag) {
 	} catch {
 		return false;
 	}
-}
-
-function createTag(tag, sha) {
-	console.log(`Creating tag: ${tag}`);
-	exec(
-		`gh api repos/${process.env.GITHUB_REPOSITORY}/git/refs -X POST -f ref=refs/tags/${tag} -f sha=${sha}`,
-		{ stdio: "inherit" }
-	);
 }
 
 async function createRelease(version, tgzPath, body = "") {
