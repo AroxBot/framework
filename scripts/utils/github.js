@@ -26,10 +26,10 @@ function getSha() {
 
 function tagExists(tag) {
 	try {
-		exec(`gh api repos/${process.env.GITHUB_REPOSITORY}/git/ref/tags/${tag}`, {
-			stdio: "ignore",
-		});
-		return true;
+		const result = exec(
+			`gh api repos/${process.env.GITHUB_REPOSITORY}/git/matching-refs/tags/${tag}`
+		);
+		return JSON.parse(result).length > 0;
 	} catch {
 		return false;
 	}
@@ -44,47 +44,23 @@ function createTag(tag, sha) {
 }
 
 async function createRelease(version, tgzPath, body = "") {
-	const repo = process.env.GITHUB_REPOSITORY;
-	if (!repo) throw new Error("GITHUB_REPOSITORY not found");
+	const sha = getSha();
 
-	console.log(`🚀 Creating GitHub Release: ${version}`);
+	console.log(`Creating GitHub Release & Tag: ${version}`);
 
-	const prerelease = isPrerelease(version);
+	const prereleaseFlag = isPrerelease(version) ? "--prerelease" : "";
+	const notes = body || `Release ${version}`;
+	const assetPath = tgzPath ? path.resolve(tgzPath) : "";
 
-	const payload = {
-		tag_name: version,
-		name: version,
-		body: body || `Release ${version}`,
-		draft: true,
-		prerelease,
-	};
+	let command = `gh release create ${version} ${assetPath} \
+        --target ${sha} \
+        --title "${version}" \
+        --notes "${notes}" \
+        ${prereleaseFlag}`;
 
-	const tmp = ".release.json";
-	writeFileSync(tmp, JSON.stringify(payload));
+	exec(command, { stdio: "inherit" });
 
-	const releaseJson = exec(
-		`gh api repos/${repo}/releases -X POST --input ${tmp}`
-	);
-
-	const release = JSON.parse(releaseJson);
-	console.log(`Release created (id=${release.id})`);
-
-	if (tgzPath) {
-		const resolved = path.resolve(tgzPath);
-
-		console.log(`Uploading asset: ${resolved}`);
-
-		exec(
-			`gh api "${release.upload_url.replace(/\{.*$/, "")}?name=install.tgz" \
-        -X POST \
-        -H "Content-Type: application/gzip" \
-        --input "${resolved}"`
-		);
-	}
-
-	exec(`gh release publish ${version}`);
-
-	return release;
+	console.log(`Release ${version} successfully published.`);
 }
 
 module.exports = { getRepoInfo, getSha, tagExists, createTag, createRelease };
