@@ -24,7 +24,9 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			for (const preconditionName of command.preconditions) {
 				const precondition = context.client.preconditions.get(preconditionName);
 				if (!precondition) {
-					context.logger.warn(`Precondition "${preconditionName}" not found for command "${command.name}".`);
+					context.logger.warn(
+						`Precondition "${preconditionName}" not found for command "${command.name}".`
+					);
 					continue;
 				}
 

@@ -43,16 +43,20 @@ new EventBuilder(
 			for (const preconditionName of command.preconditions) {
 				const precondition = context.client.preconditions.get(preconditionName);
 				if (!precondition) {
-					context.logger.warn(`Precondition "${preconditionName}" not found for command "${command.name}".`);
+					context.logger.warn(
+						`Precondition "${preconditionName}" not found for command "${command.name}".`
+					);
 					continue;
 				}
 
 				const result = await precondition.run(ctx);
 				if (!result.ok) {
-					await message.reply({
-						content: result.message,
-						allowedMentions: { repliedUser: false },
-					}).then(deleteMessageAfterSent);
+					await message
+						.reply({
+							content: result.message,
+							allowedMentions: { repliedUser: false },
+						})
+						.then(deleteMessageAfterSent);
 					return;
 				}
 			}
