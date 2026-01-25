@@ -1,4 +1,3 @@
-const { writeFileSync } = require("node:fs");
 const { exec } = require("./util");
 const path = require("node:path");
 
@@ -26,21 +25,13 @@ function getSha() {
 
 function tagExists(tag) {
 	try {
-		const result = exec(
-			`gh api repos/${process.env.GITHUB_REPOSITORY}/git/matching-refs/tags/${tag}`
-		);
-		return JSON.parse(result).length > 0;
+		exec(`gh api repos/${process.env.GITHUB_REPOSITORY}/git/ref/tags/${tag}`, {
+			stdio: "ignore",
+		});
+		return true;
 	} catch {
 		return false;
 	}
-}
-
-function createTag(tag, sha) {
-	console.log(`Creating tag: ${tag}`);
-	exec(
-		`gh api repos/${process.env.GITHUB_REPOSITORY}/git/refs -X POST -f ref=refs/tags/${tag} -f sha=${sha}`,
-		{ stdio: "inherit" }
-	);
 }
 
 async function createRelease(version, tgzPath, body = "") {

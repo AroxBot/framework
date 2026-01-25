@@ -3,7 +3,7 @@ const {
 	getRepoInfo,
 	getSha,
 	tagExists,
-	createTag,
+	//createTag,
 	createRelease,
 } = require("../utils/github");
 const {
