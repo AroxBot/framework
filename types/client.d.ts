@@ -1,5 +1,6 @@
 import { ClientOptions } from "discord.js";
 import { LoggerOptions } from "../src/utils/logger/Logger";
+import { i18n } from "i18next";
 
 export interface FrameworkPaths {
 	events?: string;
@@ -12,14 +13,10 @@ export type PrefixOptions =
 	| { enabled: false }
 	| string;
 
-export interface I18nOptions {
-	defaultLocale?: string;
-}
-
 export interface FrameworkOptions extends ClientOptions {
 	logger?: LoggerOptions;
 	prefix?: PrefixOptions;
-	paths?: FrameworkPaths;
 	autoRegisterCommands?: boolean;
-	i18n?: I18nOptions;
+	includePaths: string[];
+	i18n?: i18n;
 }

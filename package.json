@@ -38,6 +38,8 @@
 		"@swc/helpers": "^0.5.18",
 		"colorette": "^2.0.20",
 		"fast-glob": "^3.3.3",
+		"i18next": "^25.8.0",
+		"i18next-fs-backend": "^2.6.1",
 		"lodash": "^4.17.21"
 	},
 	"devDependencies": {

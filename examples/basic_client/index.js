@@ -1,12 +1,31 @@
+const i18next = require("i18next");
 const arox = require("../../dist/index");
+const backend = require("i18next-fs-backend");
+const path = require("node:path");
+const { LogLevel } = require("../../dist/utils/logger/ILogger");
+
+const myinstance = i18next.createInstance({
+	supportedLngs: ["en-US", "tr"],
+	fallbackLng: "en-US",
+	defaultNS: "translation",
+	ns: ["translation", "test"],
+	backend: {
+		loadPath: path.join(__dirname, "locales/{{lng}}/{{ns}}.json"),
+	},
+});
+myinstance.use(backend);
 
 const client = new arox.Client({
 	intents: 37376,
 	prefix: { enabled: true, prefix: "a!" },
 	logger: {
-		depth: 0,
+		level: LogLevel.Trace,
 	},
 	autoRegisterCommands: false,
+	i18n: myinstance,
+	interpolation: {
+		escapeValue: false,
+	},
 });
 
 arox.setClient(client);
@@ -20,12 +39,12 @@ arox.clearClient();
 
 command
 	.onMessage(function (ctx) {
-		const { message } = ctx;
-		void message.reply("Çalışıyom ulan şurda rahat bırak beni");
+		const { message, t, author } = ctx;
+		void message.reply(t("test:hello", { user: author.username }));
 	})
 	.onInteraction(function (ctx) {
-		const { interaction } = ctx;
-		void interaction.reply("Çalışıyom ulan şurda rahat bırak beni");
+		const { interaction, t, author } = ctx;
+		void interaction.reply(t("test:hello", { user: author.username }));
 	});
 
 async function init() {

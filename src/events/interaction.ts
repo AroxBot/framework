@@ -10,13 +10,17 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 		if (!command || !command.supportsSlash) {
 			await interaction.reply({
 				content: "Command not found or disabled.",
-				ephemeral: true,
+				flags: "Ephemeral",
 			});
 			return;
 		}
 
 		try {
 			const ctx = new Context(context.client, { interaction });
+			ctx.locale = interaction.locale;
+			context.logger.debug(
+				`${ctx.author?.tag ?? "Unknown"} used ${command.name}(interaction)`
+			);
 			if (command._onInteraction) await command._onInteraction(ctx.toJSON());
 		} catch (error) {
 			context.client.logger.error(
@@ -26,12 +30,12 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			if (interaction.replied || interaction.deferred) {
 				await interaction.followUp({
 					content: "There was an error while executing this command!",
-					ephemeral: true,
+					flags: "Ephemeral",
 				});
 			} else {
 				await interaction.reply({
 					content: "There was an error while executing this command!",
-					ephemeral: true,
+					flags: "Ephemeral",
 				});
 			}
 		}

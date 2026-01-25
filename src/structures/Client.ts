@@ -12,15 +12,11 @@ import { FrameworkOptions } from "#types/client.js";
 import { merge } from "lodash";
 import { clearClient, setClient } from "../context";
 import { getPrefix } from "../utils/util";
-import { Logger } from "../utils/logger/Logger";
-import { I18n } from "./I18n";
+import { I18nLoggerAdapter, Logger } from "../utils/logger/Logger";
+import { i18n } from "i18next";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
-	paths: {
-		events: "events",
-		commands: "commands",
-		locales: "locales",
-	},
+	includePaths: ["events", "commands"],
 	autoRegisterCommands: true,
 };
 
@@ -31,7 +27,7 @@ export class Client<
 	public commands: Collection<string, CommandBuilder>;
 	public aliases: Collection<string, Set<string>>;
 	public readonly prefix: string | false;
-	public readonly i18n: I18n;
+	public i18n: i18n | undefined;
 
 	declare public options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
@@ -43,18 +39,17 @@ export class Client<
 		this.commands = new Collection();
 		this.aliases = new Collection();
 		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
-		this.i18n = new I18n(this.options.i18n?.defaultLocale, this.logger);
-
-		if (this.options.paths?.locales) {
-			this.i18n.loadLocales(
-				path.join(getProjectRoot(), this.options.paths.locales)
-			);
+		if (this.options.i18n) {
+			this.i18n = this.options.i18n;
+			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
 
-		if (this.options.paths?.events) {
-			this.loadFiles(
-				path.join(getProjectRoot(), this.options.paths?.events)
-			).catch((error) => this.logger.error("Error loading events:", error));
+		if (this.options.includePaths) {
+			for (const p of this.options.includePaths) {
+				this.loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+					this.logger.error("Error loading events:", error)
+				);
+			}
 		}
 
 		setClient(this);
@@ -66,10 +61,16 @@ export class Client<
 			clearClient();
 		}
 	}
+	override async login(token?: string) {
+		if (this.i18n) {
+			await this.i18n.init();
+		}
+		return super.login(token);
+	}
 
-	async loadFiles(dir: string) {
+	async loadDir(dir: string) {
 		if (!require("fs").existsSync(dir)) {
-			this.logger.warn(`Directory not found: ${dir}`);
+			this.logger.debug(`Directory not found: ${dir}`);
 			return;
 		}
 		const files = getFiles(dir);
