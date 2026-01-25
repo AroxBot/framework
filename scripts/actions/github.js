@@ -55,7 +55,7 @@ async function buildProject() {
 
 			buildPath ??= await build(tempjson);
 
-			createTag(version, sha);
+			//createTag(version, sha);
 
 			const changelog = generateChangelog(version);
 			await createRelease(version, buildPath, changelog);
