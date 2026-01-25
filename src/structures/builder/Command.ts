@@ -3,12 +3,16 @@ import {
 	ChatInputCommandInteraction,
 	Message,
 } from "discord.js";
-import { Context } from "./Context";
-import { Client } from "./Client";
+import { Context, Client } from "#structures";
 import { Argument } from "./Argument";
-import { currentClient } from "../context";
+import { currentClient } from "#ctx";
 import { MaybePromise } from "#types/extra.js";
-import { Logger } from "../utils/logger/Logger";
+import { Logger } from "#utils";
+
+type MessageContext = NonNullable<ReturnType<Context<Message>["toJSON"]>>;
+type InteractionContext = NonNullable<
+	ReturnType<Context<ChatInputCommandInteraction>["toJSON"]>
+>;
 
 export interface CommandOptions {
 	name: string;
@@ -29,12 +33,8 @@ export class CommandBuilder {
 	public readonly options: ApplicationCommandOptionData[];
 	private _supportsSlash: boolean;
 	private _supportsPrefix: boolean;
-	public _onMessage?: (
-		ctx: NonNullable<ReturnType<Context<Message>["toJSON"]>>
-	) => MaybePromise<void>;
-	public _onInteraction?: (
-		ctx: NonNullable<ReturnType<Context<ChatInputCommandInteraction>["toJSON"]>>
-	) => MaybePromise<void>;
+	public _onMessage?: (ctx: MessageContext) => MaybePromise<void>;
+	public _onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
 
 	public get supportsSlash() {
 		return this._supportsSlash && this._onInteraction;
@@ -99,22 +99,12 @@ export class CommandBuilder {
 		this.logger.debug(`Loaded Command ${this.name}`);
 	}
 
-	onMessage(
-		func: (
-			ctx: NonNullable<ReturnType<Context<Message>["toJSON"]>>
-		) => MaybePromise<void>
-	) {
+	onMessage(func: (ctx: MessageContext) => MaybePromise<void>) {
 		this._onMessage = func;
 		return this;
 	}
 
-	onInteraction(
-		func: (
-			ctx: NonNullable<
-				ReturnType<Context<ChatInputCommandInteraction>["toJSON"]>
-			>
-		) => MaybePromise<void>
-	) {
+	onInteraction(func: (ctx: InteractionContext) => MaybePromise<void>) {
 		this._onInteraction = func;
 		return this;
 	}

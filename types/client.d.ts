@@ -1,9 +1,11 @@
 import { ClientOptions } from "discord.js";
 import { LoggerOptions } from "../src/utils/logger/Logger";
+import { i18n } from "i18next";
 
 export interface FrameworkPaths {
 	events?: string;
 	commands?: string;
+	locales?: string;
 }
 
 export type PrefixOptions =
@@ -14,6 +16,7 @@ export type PrefixOptions =
 export interface FrameworkOptions extends ClientOptions {
 	logger?: LoggerOptions;
 	prefix?: PrefixOptions;
-	paths?: FrameworkPaths;
 	autoRegisterCommands?: boolean;
+	includePaths: string[];
+	i18n?: i18n;
 }

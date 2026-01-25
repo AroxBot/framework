@@ -6,6 +6,7 @@ import type { Color } from "colorette";
 import { Timestamp } from "@sapphire/timestamp";
 import type { ILogger } from "./ILogger";
 import { LogLevel } from "./ILogger";
+import { LoggerModule } from "i18next";
 
 export class Logger implements ILogger {
 	public level: LogLevel;
@@ -389,4 +390,20 @@ export enum LoggerStyleBackground {
 	MagentaBright = "bgMagentaBright",
 	CyanBright = "bgCyanBright",
 	WhiteBright = "bgWhiteBright",
+}
+
+export class I18nLoggerAdapter implements LoggerModule {
+	public readonly type = "logger";
+	constructor(private readonly logger: Logger) {}
+	log(...args: unknown[]): void {
+		this.logger.debug("[i18next]", ...args);
+	}
+
+	warn(...args: unknown[]): void {
+		this.logger.warn("[i18next]", ...args);
+	}
+
+	error(...args: unknown[]): void {
+		this.logger.error("[i18next]", ...args);
+	}
 }

@@ -20,7 +20,10 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"imports": {
-		"#types/*": "./types/*"
+		"#types/*": "./types/*",
+		"#utils": "./src/utils/index.ts",
+		"#structures": "./src/structures/index.ts",
+		"#ctx": "./src/context.ts"
 	},
 	"scripts": {
 		"prepare": "node scripts/prepareHusky.js",
@@ -38,12 +41,14 @@
 		"@swc/helpers": "^0.5.18",
 		"colorette": "^2.0.20",
 		"fast-glob": "^3.3.3",
+		"i18next": "^25.8.0",
+		"i18next-fs-backend": "^2.6.1",
 		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
 		"@swc/cli": "^0.7.10",
 		"@types/lodash": "^4.17.23",
-		"@types/node": "^25.0.8",
+		"@types/node": "^25.0.9",
 		"husky": "^9.1.7",
 		"libnpmpack": "^9.0.12",
 		"oxfmt": "^0.24.0",

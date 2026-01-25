@@ -5,20 +5,23 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "./Command";
+import { CommandBuilder } from "#structures";
 import path from "path";
-import { getFiles, getProjectRoot } from "../utils/Files";
+import {
+	getFiles,
+	getProjectRoot,
+	getPrefix,
+	I18nLoggerAdapter,
+	Logger,
+} from "#utils";
 import { FrameworkOptions } from "#types/client.js";
 import { merge } from "lodash";
-import { clearClient, setClient } from "../context";
-import { getPrefix } from "../utils/util";
-import { Logger } from "../utils/logger/Logger";
+import { clearClient, setClient } from "#ctx";
+import { i18n } from "i18next";
+import { existsSync } from "fs";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
-	paths: {
-		events: "events",
-		commands: "commands",
-	},
+	includePaths: ["events", "commands"],
 	autoRegisterCommands: true,
 };
 
@@ -29,6 +32,7 @@ export class Client<
 	public commands: Collection<string, CommandBuilder>;
 	public aliases: Collection<string, Set<string>>;
 	public readonly prefix: string | false;
+	public i18n: i18n | undefined;
 
 	declare public options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
@@ -40,11 +44,9 @@ export class Client<
 		this.commands = new Collection();
 		this.aliases = new Collection();
 		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
-
-		if (this.options.paths?.events) {
-			this.loadFiles(
-				path.join(getProjectRoot(), this.options.paths?.events)
-			).catch((error) => this.logger.error("Error loading events:", error));
+		if (this.options.i18n) {
+			this.i18n = this.options.i18n;
+			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
 
 		setClient(this);
@@ -56,10 +58,23 @@ export class Client<
 			clearClient();
 		}
 	}
+	override async login(token?: string) {
+		if (this.options.includePaths) {
+			for (const p of this.options.includePaths) {
+				this.loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+					this.logger.error("Error loading events:", error)
+				);
+			}
+		}
+		if (this.i18n && !this.i18n.isInitialized) {
+			await this.i18n.init();
+		}
+		return super.login(token);
+	}
 
-	async loadFiles(dir: string) {
-		if (!require("fs").existsSync(dir)) {
-			this.logger.warn(`Directory not found: ${dir}`);
+	async loadDir(dir: string) {
+		if (!existsSync(dir)) {
+			this.logger.debug(`Directory not found: ${dir}`);
 			return;
 		}
 		const files = getFiles(dir);

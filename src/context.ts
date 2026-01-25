@@ -1,4 +1,4 @@
-import { Client } from "./structures/Client";
+import { Client } from "#structures";
 
 // Birden fazla client olursa hata çıkartabilir ama aklıma gelen tek şey bu
 export let currentClient: Client | null = null;

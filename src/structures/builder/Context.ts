@@ -1,5 +1,5 @@
-import { Message, User, ChatInputCommandInteraction } from "discord.js";
-import { Client } from "../structures/Client";
+import { Message, User, ChatInputCommandInteraction, Locale } from "discord.js";
+import { Client } from "#structures";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -7,12 +7,14 @@ type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 		: { message: T; args?: string[] };
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
-	public readonly client: Client;
 	public readonly args: string[];
 	public readonly data: T;
+	public locale?: `${Locale}`;
 
-	constructor(client: Client, payload: ContextPayload<T>) {
-		this.client = client;
+	constructor(
+		public readonly client: Client,
+		payload: ContextPayload<T>
+	) {
 		this.args = payload.args ?? [];
 
 		if ("interaction" in payload) {
@@ -40,22 +42,40 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
-	toJSON() {
+	public t(key: string, args?: Record<string, any>): string {
+		if (!this.client.i18n) {
+			throw new Error("i18n is not initialized");
+		}
+		let locale =
+			this.locale ??
+			(Array.isArray(this.client.i18n.options.fallbackLng)
+				? this.client.i18n.options.fallbackLng[0]
+				: this.client.i18n.options.fallbackLng) ??
+			"en";
+
+		const t = this.client.i18n.getFixedT(locale);
+
+		return t(key, args) as string;
+	}
+
+	public toJSON() {
 		const { data, args, author } = this;
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
 				interaction: data,
-				author: author,
+				author,
+				t: this.t.bind(this),
 			};
 		}
 
 		return {
 			kind: "message" as const,
 			message: data as Message,
-			args: args,
-			author: author,
+			args,
+			author,
+			t: (this as Context<Message>).t.bind(this),
 		};
 	}
 }

@@ -1,7 +1,6 @@
 import { Events } from "discord.js";
-import { EventBuilder } from "../structures/Event";
-import { Context } from "../structures/Context";
-import { deleteMessage } from "../utils/util";
+import { EventBuilder, Context } from "#structures";
+import { deleteMessageAfterSent } from "#utils";
 
 new EventBuilder(
 	Events.MessageCreate,
@@ -31,7 +30,7 @@ new EventBuilder(
 					content: "Command not found or disabled.",
 					allowedMentions: { repliedUser: false },
 				})
-				.then(deleteMessage);
+				.then(deleteMessageAfterSent);
 			return;
 		}
 
