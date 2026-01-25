@@ -55,7 +55,7 @@ async function buildProject() {
 			buildPath ??= await build(tempjson);
 
 			const changelog = generateChangelog(version);
-			await createRelease(version, buildPath, changelog);
+			createRelease(version, buildPath, changelog);
 		} catch (error) {
 			console.log(error);
 			err = true;
