@@ -20,7 +20,10 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"imports": {
-		"#types/*": "./types/*"
+		"#types/*": "./types/*",
+		"#utils": "./src/utils/index.ts",
+		"#structures": "./src/structures/index.ts",
+		"#ctx": "./src/context.ts"
 	},
 	"scripts": {
 		"prepare": "node scripts/prepareHusky.js",

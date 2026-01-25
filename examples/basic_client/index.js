@@ -12,6 +12,9 @@ const myinstance = i18next.createInstance({
 	backend: {
 		loadPath: path.join(__dirname, "locales/{{lng}}/{{ns}}.json"),
 	},
+	interpolation: {
+		escapeValue: false,
+	},
 });
 myinstance.use(backend);
 
@@ -23,9 +26,6 @@ const client = new arox.Client({
 	},
 	autoRegisterCommands: false,
 	i18n: myinstance,
-	interpolation: {
-		escapeValue: false,
-	},
 });
 
 arox.setClient(client);
@@ -40,11 +40,15 @@ arox.clearClient();
 command
 	.onMessage(function (ctx) {
 		const { message, t, author } = ctx;
-		void message.reply(t("test:hello", { user: author.username }));
+		void message.reply(
+			t("test:hello", { user: author?.username ?? "Unknown" })
+		);
 	})
 	.onInteraction(function (ctx) {
 		const { interaction, t, author } = ctx;
-		void interaction.reply(t("test:hello", { user: author.username }));
+		void interaction.reply(
+			t("test:hello", { user: author?.username ?? "Unknown" })
+		);
 	});
 
 async function init() {

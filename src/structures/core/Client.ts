@@ -5,15 +5,20 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "./Command";
+import { CommandBuilder } from "#structures";
 import path from "path";
-import { getFiles, getProjectRoot } from "../utils/Files";
+import {
+	getFiles,
+	getProjectRoot,
+	getPrefix,
+	I18nLoggerAdapter,
+	Logger,
+} from "#utils";
 import { FrameworkOptions } from "#types/client.js";
 import { merge } from "lodash";
-import { clearClient, setClient } from "../context";
-import { getPrefix } from "../utils/util";
-import { I18nLoggerAdapter, Logger } from "../utils/logger/Logger";
+import { clearClient, setClient } from "#ctx";
 import { i18n } from "i18next";
+import { existsSync } from "fs";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	includePaths: ["events", "commands"],
@@ -44,14 +49,6 @@ export class Client<
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
 
-		if (this.options.includePaths) {
-			for (const p of this.options.includePaths) {
-				this.loadDir(path.join(getProjectRoot(), p)).catch((error) =>
-					this.logger.error("Error loading events:", error)
-				);
-			}
-		}
-
 		setClient(this);
 		try {
 			require("../events/ready");
@@ -62,14 +59,21 @@ export class Client<
 		}
 	}
 	override async login(token?: string) {
-		if (this.i18n) {
+		if (this.options.includePaths) {
+			for (const p of this.options.includePaths) {
+				this.loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+					this.logger.error("Error loading events:", error)
+				);
+			}
+		}
+		if (this.i18n && !this.i18n.isInitialized) {
 			await this.i18n.init();
 		}
 		return super.login(token);
 	}
 
 	async loadDir(dir: string) {
-		if (!require("fs").existsSync(dir)) {
+		if (!existsSync(dir)) {
 			this.logger.debug(`Directory not found: ${dir}`);
 			return;
 		}

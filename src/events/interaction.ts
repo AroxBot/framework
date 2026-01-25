@@ -1,6 +1,5 @@
-import { Events } from "discord.js";
-import { EventBuilder } from "../structures/Event";
-import { Context } from "../structures/Context";
+import { Events, MessageFlags } from "discord.js";
+import { EventBuilder, Context } from "#structures";
 
 new EventBuilder(Events.InteractionCreate, false).onExecute(
 	async function (context, interaction) {
@@ -10,7 +9,7 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 		if (!command || !command.supportsSlash) {
 			await interaction.reply({
 				content: "Command not found or disabled.",
-				flags: "Ephemeral",
+				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -30,12 +29,12 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			if (interaction.replied || interaction.deferred) {
 				await interaction.followUp({
 					content: "There was an error while executing this command!",
-					flags: "Ephemeral",
+					flags: MessageFlags.Ephemeral,
 				});
 			} else {
 				await interaction.reply({
 					content: "There was an error while executing this command!",
-					flags: "Ephemeral",
+					flags: MessageFlags.Ephemeral,
 				});
 			}
 		}

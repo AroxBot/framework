@@ -1,5 +1,5 @@
 import { Message, User, ChatInputCommandInteraction, Locale } from "discord.js";
-import { Client } from "../structures/Client";
+import { Client } from "#structures";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -9,7 +9,7 @@ type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 export class Context<T extends ChatInputCommandInteraction | Message> {
 	public readonly args: string[];
 	public readonly data: T;
-	public locale: `${Locale}`;
+	public locale?: `${Locale}`;
 
 	constructor(
 		public readonly client: Client,
@@ -25,11 +25,11 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	}
 
 	public isInteraction(): this is Context<ChatInputCommandInteraction> {
-		return "user" in this.data;
+		return this.data instanceof ChatInputCommandInteraction;
 	}
 
 	public isMessage(): this is Context<Message> {
-		return "author" in this.data;
+		return this.data instanceof Message;
 	}
 
 	public get author(): User | null {
@@ -44,13 +44,14 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 
 	public t(key: string, args?: Record<string, any>): string {
 		if (!this.client.i18n) {
-			throw new Error("i18n is not initalized");
+			throw new Error("i18n is not initialized");
 		}
 		let locale =
 			this.locale ??
 			(Array.isArray(this.client.i18n.options.fallbackLng)
 				? this.client.i18n.options.fallbackLng[0]
-				: this.client.i18n.options.fallbackLng);
+				: this.client.i18n.options.fallbackLng) ??
+			"en";
 
 		const t = this.client.i18n.getFixedT(locale);
 
@@ -58,14 +59,14 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	}
 
 	public toJSON() {
-		const { data, args, author, t } = this;
+		const { data, args, author } = this;
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
 				interaction: data,
 				author,
-				t: t.bind(this),
+				t: this.t.bind(this),
 			};
 		}
 
@@ -74,7 +75,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			message: data as Message,
 			args,
 			author,
-			t: t.bind(this),
+			t: (this as Context<Message>).t.bind(this),
 		};
 	}
 }

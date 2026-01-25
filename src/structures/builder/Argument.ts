@@ -25,6 +25,16 @@ export class Argument {
 	}
 
 	public toJSON(): ApplicationCommandOptionData {
+		const choicesAllowedTypes = [
+			ApplicationCommandOptionType.String,
+			ApplicationCommandOptionType.Integer,
+			ApplicationCommandOptionType.Number,
+		];
+		if (this.choices && !choicesAllowedTypes.includes(this.type)) {
+			throw new Error(
+				`Choices are not allowed for option type ${ApplicationCommandOptionType[this.type]} (${this.type})`
+			);
+		}
 		return {
 			name: this.name,
 			description: this.description,

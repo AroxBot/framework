@@ -1,8 +1,8 @@
 import { ClientEvents } from "discord.js";
 import { MaybePromise } from "#types/extra.js";
-import { currentClient } from "../context";
-import { Client } from "./Client";
-import { Logger } from "../utils/logger/Logger";
+import { currentClient } from "#ctx";
+import { Client } from "#structures";
+import { Logger } from "#utils";
 
 type EventArgs<K extends keyof ClientEvents> = ClientEvents[K];
 type EventHandler<K extends keyof ClientEvents> = (
@@ -41,8 +41,6 @@ export class EventBuilder<K extends keyof ClientEvents> {
 			this.handler = _handler;
 			this.register();
 		}
-
-		this.logger.debug(`Loaded Event ${String(this.name)}`);
 	}
 
 	private register(): void {
@@ -55,6 +53,7 @@ export class EventBuilder<K extends keyof ClientEvents> {
 		}
 
 		this.bound = true;
+		this.logger.debug(`Loaded Event ${String(this.name)}`);
 	}
 
 	public onExecute(func: EventHandler<K>) {
