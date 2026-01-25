@@ -1,3 +1,4 @@
+const { execSync } = require("node:child_process");
 const { exec } = require("./util");
 const path = require("node:path");
 
@@ -25,16 +26,16 @@ function getSha() {
 
 function tagExists(tag) {
 	try {
-		const result = exec(
-			`gh api repos/${process.env.GITHUB_REPOSITORY}/git/matching-refs/tags/${tag}`
-		);
-		return JSON.parse(result).length > 0;
+		exec(`gh api repos/${process.env.GITHUB_REPOSITORY}/git/ref/tags/${tag}`, {
+			stdio: "ignore",
+		});
+		return true;
 	} catch {
 		return false;
 	}
 }
 
-async function createRelease(version, tgzPath, body = "") {
+function createRelease(version, tgzPath, body = "") {
 	const sha = getSha();
 
 	console.log(`Creating GitHub Release & Tag: ${version}`);
@@ -43,13 +44,17 @@ async function createRelease(version, tgzPath, body = "") {
 	const notes = body || `Release ${version}`;
 	const assetPath = tgzPath ? path.resolve(tgzPath) : "";
 
-	let command = `gh release create ${version} ${assetPath} \
-        --target ${sha} \
-        --title "${version}" \
-        --notes "${notes}" \
-        ${prereleaseFlag}`;
+	const command = `gh release create ${version} ${assetPath} \
+    --target ${sha} \
+    --title "${version}" \
+    --notes-file - \
+    ${prereleaseFlag}`;
 
-	exec(command, { stdio: "inherit" });
+	execSync(command, {
+		input: notes,
+		stdio: ["pipe", "inherit", "inherit"],
+		encoding: "utf-8",
+	});
 
 	console.log(`Release ${version} successfully published.`);
 }
