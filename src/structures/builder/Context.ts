@@ -7,9 +7,9 @@ type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 		: { message: T; args?: string[] };
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
-	public readonly args: string[];
-	public readonly data: T;
-	public locale?: `${Locale}`;
+	readonly args: string[];
+	readonly data: T;
+	locale?: `${Locale}`;
 
 	constructor(
 		public readonly client: Client,
@@ -24,15 +24,15 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		}
 	}
 
-	public isInteraction(): this is Context<ChatInputCommandInteraction> {
+	isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return this.data instanceof ChatInputCommandInteraction;
 	}
 
-	public isMessage(): this is Context<Message> {
+	isMessage(): this is Context<Message> {
 		return this.data instanceof Message;
 	}
 
-	public get author(): User | null {
+	get author(): User | null {
 		if (this.isInteraction()) {
 			return this.data.user;
 		}
@@ -42,7 +42,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
-	public t(key: string, args?: Record<string, any>): string {
+	t(key: string, args?: Record<string, any>): string {
 		if (!this.client.i18n) {
 			throw new Error("i18n is not initialized");
 		}
@@ -58,7 +58,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return t(key, args) as string;
 	}
 
-	public toJSON() {
+	toJSON() {
 		const { data, args, author } = this;
 
 		if (this.isInteraction()) {

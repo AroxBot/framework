@@ -11,15 +11,15 @@ type EventHandler<K extends keyof ClientEvents> = (
 ) => MaybePromise<void>;
 
 export class EventBuilder<K extends keyof ClientEvents> {
-	public readonly client: Client;
-	public readonly logger: Logger;
-	private handler?: EventHandler<K>;
-	private bound = false;
+	readonly client: Client;
+	readonly logger: Logger;
+	#handler?: EventHandler<K>;
+	#bound = false;
 
-	private readonly listener = async (...args: EventArgs<K>) => {
-		if (!this.handler) return;
+	#listener = async (...args: EventArgs<K>) => {
+		if (!this.#handler) return;
 		try {
-			await this.handler(this, ...args);
+			await this.#handler(this, ...args);
 		} catch (error) {
 			this.client.logger.error(
 				`Error executing event ${this.name} (${this.constructor.name}):`,
@@ -38,27 +38,27 @@ export class EventBuilder<K extends keyof ClientEvents> {
 		this.logger = currentClient.logger;
 
 		if (_handler) {
-			this.handler = _handler;
-			this.register();
+			this.#handler = _handler;
+			this.#register();
 		}
 	}
 
-	private register(): void {
-		if (this.bound || !this.handler) return;
+	#register(): void {
+		if (this.#bound || !this.#handler) return;
 
 		if (this.once) {
-			this.client.once(this.name as string, this.listener);
+			this.client.once(this.name as string, this.#listener);
 		} else {
-			this.client.on(this.name as string, this.listener);
+			this.client.on(this.name as string, this.#listener);
 		}
 
-		this.bound = true;
+		this.#bound = true;
 		this.logger.debug(`Loaded Event ${String(this.name)}`);
 	}
 
 	public onExecute(func: EventHandler<K>) {
-		this.handler = func;
-		this.register();
+		this.#handler = func;
+		this.#register();
 		return this;
 	}
 }

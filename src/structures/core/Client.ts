@@ -28,13 +28,13 @@ const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 export class Client<
 	Ready extends boolean = boolean,
 > extends DiscordClient<Ready> {
-	public readonly logger: Logger;
-	public commands: Collection<string, CommandBuilder>;
-	public aliases: Collection<string, Set<string>>;
-	public readonly prefix: string | false;
-	public i18n: i18n | undefined;
+	readonly logger: Logger;
+	commands: Collection<string, CommandBuilder>;
+	aliases: Collection<string, Set<string>>;
+	readonly prefix: string | false;
+	i18n: i18n | undefined;
 
-	declare public options: Omit<FrameworkOptions, "intents"> & {
+	declare options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
 	};
 
@@ -61,7 +61,7 @@ export class Client<
 	override async login(token?: string) {
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
-				this.loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+				this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
 					this.logger.error("Error loading events:", error)
 				);
 			}
@@ -72,18 +72,18 @@ export class Client<
 		return super.login(token);
 	}
 
-	async loadDir(dir: string) {
+	async #loadDir(dir: string) {
 		if (!existsSync(dir)) {
 			this.logger.debug(`Directory not found: ${dir}`);
 			return;
 		}
 		const files = getFiles(dir);
 		for (const file of files) {
-			await this.loadFile(file);
+			await this.#loadFile(file);
 		}
 	}
 
-	async loadFile(file: string) {
+	async #loadFile(file: string) {
 		try {
 			delete require.cache[require.resolve(file)];
 			setClient(this);

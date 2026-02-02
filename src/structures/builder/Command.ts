@@ -31,16 +31,16 @@ export class CommandBuilder {
 	public readonly description: string;
 	public readonly aliases: string[];
 	public readonly options: ApplicationCommandOptionData[];
-	private _supportsSlash: boolean;
-	private _supportsPrefix: boolean;
-	public _onMessage?: (ctx: MessageContext) => MaybePromise<void>;
-	public _onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
+	#supportsSlash: boolean;
+	#supportsPrefix: boolean;
+	_onMessage?: (ctx: MessageContext) => MaybePromise<void>;
+	_onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
 
-	public get supportsSlash() {
-		return this._supportsSlash && this._onInteraction;
+	get supportsSlash() {
+		return this.#supportsSlash && this._onInteraction;
 	}
-	public get supportsPrefix() {
-		return this._supportsPrefix && this._onMessage;
+	get supportsPrefix() {
+		return this.#supportsPrefix && this._onMessage;
 	}
 	constructor(options: CommandOptions) {
 		const client = currentClient;
@@ -55,10 +55,10 @@ export class CommandBuilder {
 		this.options = (options.options ?? []).map((opt) => {
 			return opt instanceof Argument ? opt.toJSON() : opt;
 		});
-		this._supportsPrefix = options.prefix ?? false;
-		this._supportsSlash = options.slash ?? false;
+		this.#supportsPrefix = options.prefix ?? false;
+		this.#supportsSlash = options.slash ?? false;
 
-		if (!this._supportsPrefix && !this._supportsSlash) {
+		if (!this.#supportsPrefix && !this.#supportsSlash) {
 			throw new Error(
 				`Command ${this.name} must support either slash or prefix commands.`
 			);
