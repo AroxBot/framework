@@ -5,7 +5,7 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "#structures";
+import { CommandBuilder } from "../index";
 import path from "path";
 import {
 	getFiles,
@@ -13,10 +13,10 @@ import {
 	getPrefix,
 	I18nLoggerAdapter,
 	Logger,
-} from "#utils";
+} from "../../utils";
 import { FrameworkOptions } from "#types/client.js";
 import { merge } from "lodash";
-import { clearClient, setClient } from "#ctx";
+import { clearClient, setClient } from "../../context";
 import { i18n } from "i18next";
 import { existsSync } from "fs";
 
@@ -51,9 +51,9 @@ export class Client<
 
 		setClient(this);
 		try {
-			require("../events/ready");
-			require("../events/interaction");
-			if (this.prefix) require("../events/message");
+			require("../../events/ready.js");
+			require("../../events/interaction.js");
+			if (this.prefix) require("../../events/message.js");
 		} finally {
 			clearClient();
 		}
@@ -109,11 +109,7 @@ export class Client<
 
 		const slashCommands = this.commands
 			.filter((cmd) => cmd.supportsSlash)
-			.map((cmd) => ({
-				name: cmd.name,
-				description: cmd.description,
-				options: cmd.options,
-			}));
+			.map((cmd) => cmd.data.toClientJSON(this));
 
 		const rest = new REST({ version: "10" }).setToken(this.token);
 

@@ -1,29 +1,42 @@
 import { Events, MessageFlags } from "discord.js";
-import { EventBuilder, Context } from "#structures";
+import { EventBuilder, Context } from "../structures/index";
 
 new EventBuilder(Events.InteractionCreate, false).onExecute(
 	async function (context, interaction) {
 		if (!interaction.isChatInputCommand()) return;
 
 		const command = context.client.commands.get(interaction.commandName);
-		if (!command || !command.supportsSlash) {
+		const ctx = new Context(context.client, { interaction });
+
+		if (!command) {
 			await interaction.reply({
-				content: "Command not found or disabled.",
+				content:
+					ctx.t("error.command.notfound") !== "error.command.notfound"
+						? ctx.t("error.command.notfound")
+						: "Command not found or disabled.",
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
-
+		if (!command.supportsSlash) {
+			await interaction.reply({
+				content:
+					ctx.t("error.command.disabled") !== "error.command.disabled"
+						? ctx.t("error.command.disabled")
+						: "Command not found or disabled.",
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
 		try {
-			const ctx = new Context(context.client, { interaction });
 			ctx.locale = interaction.locale;
 			context.logger.debug(
-				`${ctx.author?.tag ?? "Unknown"} used ${command.name}(interaction)`
+				`${ctx.author?.tag ?? "Unknown"} used ${command.data.name}(interaction)`
 			);
 			if (command._onInteraction) await command._onInteraction(ctx.toJSON());
 		} catch (error) {
 			context.client.logger.error(
-				`Error executing command ${command.name}:`,
+				`Error executing command ${command.data.name}:`,
 				error
 			);
 			if (interaction.replied || interaction.deferred) {

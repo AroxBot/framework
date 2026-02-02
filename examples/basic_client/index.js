@@ -29,12 +29,12 @@ const client = new arox.Client({
 });
 
 arox.setClient(client);
-const command = new arox.CommandBuilder({
-	name: "arox",
-	description: "Arox test command",
-	slash: true,
-	prefix: true,
-});
+const command = new arox.CommandBuilder(
+	new arox.ApplicationJSONBuilder()
+		.setName("arox")
+		.setDescription("Arox Test Command")
+		.addAliases("a")
+);
 arox.clearClient();
 
 command
