@@ -1,9 +1,8 @@
 name: Push Code
 
 on:
-  pull_request:
-    branches:
-      - main
+  pull_request_review:
+    types: [submitted]
   push:
     branches:
       - main
@@ -14,8 +13,12 @@ permissions:
   id-token: write
 
 jobs:
-  lint:
+  check:
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request_review' &&
+       github.event.review.state == 'approved')
 
     steps:
       - name: Checkout code
@@ -37,7 +40,7 @@ jobs:
         run: npm run check
 
   release_git:
-    needs: lint
+    needs: check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -47,7 +50,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js (with npm cache)
+      - name: Setup Node.js
         uses: actions/setup-node@v4.0.2
         with:
           node-version: "25"
@@ -70,8 +73,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
 
   release_npm:
+    needs: check
     environment: npm
-    needs: lint
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -81,7 +84,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js (with npm cache)
+      - name: Setup Node.js
         uses: actions/setup-node@v4.0.2
         with:
           node-version: "25"
@@ -91,7 +94,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run github release script
+      - name: Run npm release script
         run: npm run release:npm
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
