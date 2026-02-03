@@ -3,6 +3,7 @@
 CHANGELOG.md
 cargo.toml
 .husky
+cliff.toml
 
 # Test
 examples
