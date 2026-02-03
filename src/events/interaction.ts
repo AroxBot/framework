@@ -10,20 +10,18 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 
 		if (!command) {
 			await interaction.reply({
-				content:
-					ctx.t("error.command.notfound") !== "error.command.notfound"
-						? ctx.t("error.command.notfound")
-						: "Command not found or disabled.",
+				content: ctx.t("error.command.notfound", {
+					defaultValue: "Command not found or disabled.",
+				}),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
 		if (!command.supportsSlash) {
 			await interaction.reply({
-				content:
-					ctx.t("error.command.disabled") !== "error.command.disabled"
-						? ctx.t("error.command.disabled")
-						: "Command not found or disabled.",
+				content: ctx.t("error.command.disabled", {
+					defaultValue: "Command not found or disabled.",
+				}),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;

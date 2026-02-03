@@ -10,7 +10,7 @@ export interface ApplicationJSONBody extends RESTPostAPIChatInputApplicationComm
 	slash_support: boolean;
 	aliases: string[];
 }
-export class ApplicationJSONBuilder extends SlashCommandBuilder {
+export class ApplicationCommandBuilder extends SlashCommandBuilder {
 	constructor() {
 		super();
 	}
@@ -46,7 +46,9 @@ export class ApplicationJSONBuilder extends SlashCommandBuilder {
 		return super.toJSON() as ApplicationJSONBody;
 	}
 
-	toClientJSON(client: Client): ReturnType<ApplicationJSONBuilder["toJSON"]> {
+	toClientJSON(
+		client: Client
+	): ReturnType<ApplicationCommandBuilder["toJSON"]> {
 		return {
 			...this.toJSON(),
 		};

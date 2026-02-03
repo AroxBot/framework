@@ -29,10 +29,9 @@ new EventBuilder(
 		if (!command) {
 			await message
 				.reply({
-					content:
-						ctx.t("error.command.notfound") !== "error.command.notfound"
-							? ctx.t("error.command.notfound")
-							: "Command not found or disabled.",
+					content: ctx.t("error.command.notfound", {
+						defaultValue: "Command not found or disabled.",
+					}),
 					allowedMentions: { repliedUser: false },
 				})
 				.then(deleteMessageAfterSent);
@@ -42,10 +41,9 @@ new EventBuilder(
 		if (!command.supportsPrefix) {
 			await message
 				.reply({
-					content:
-						ctx.t("error.command.disabled") !== "error.command.disabled"
-							? ctx.t("error.command.disabled")
-							: "Command not found or disabled.",
+					content: ctx.t("error.command.disabled", {
+						defaultValue: "Command not found or disabled.",
+					}),
 					allowedMentions: { repliedUser: false },
 				})
 				.then(deleteMessageAfterSent);

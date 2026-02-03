@@ -1,5 +1,6 @@
 import { Message, User, ChatInputCommandInteraction, Locale } from "discord.js";
 import { Client } from "../index";
+import { TOptions } from "i18next";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -42,11 +43,12 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
-	t(key: string, args?: Record<string, any>): string {
+	t(key: string, options?: TOptions & { defaultValue?: string }): string {
 		if (!this.client.i18n) {
 			throw new Error("i18n is not initialized");
 		}
-		let locale =
+
+		const locale =
 			this.locale ??
 			(Array.isArray(this.client.i18n.options.fallbackLng)
 				? this.client.i18n.options.fallbackLng[0]
@@ -55,7 +57,13 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 
 		const t = this.client.i18n.getFixedT(locale);
 
-		return t(key, args) as string;
+		const result = t(key, options);
+
+		if (result === key && options?.defaultValue) {
+			return options.defaultValue;
+		}
+
+		return result;
 	}
 
 	toJSON() {

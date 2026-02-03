@@ -3,7 +3,7 @@ import { Context, Client } from "../index";
 import { currentClient } from "../../context";
 import { MaybePromise } from "#types/extra.js";
 import { Logger } from "../../utils/index";
-import { ApplicationJSONBuilder } from "./Builder";
+import { ApplicationCommandBuilder } from "./Builder";
 
 type MessageContext = NonNullable<ReturnType<Context<Message>["toJSON"]>>;
 type InteractionContext = NonNullable<
@@ -25,7 +25,7 @@ export class CommandBuilder {
 		return this.#supportsPrefix && this._onMessage;
 	}
 
-	constructor(public readonly data: ApplicationJSONBuilder) {
+	constructor(public readonly data: ApplicationCommandBuilder) {
 		const client = currentClient;
 		if (!client) throw new Error("Client is not defined");
 		this.client = client;
