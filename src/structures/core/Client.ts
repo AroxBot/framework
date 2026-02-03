@@ -15,7 +15,6 @@ import {
 	Logger,
 } from "../../utils";
 import { FrameworkOptions } from "#types/client.js";
-import { merge } from "lodash";
 import { clearClient, setClient } from "../../context";
 import { i18n } from "i18next";
 import { existsSync } from "fs";
@@ -39,7 +38,7 @@ export class Client<
 	};
 
 	constructor(opts: FrameworkOptions) {
-		super(merge({}, defaultOpts, opts) as FrameworkOptions);
+		super({ ...defaultOpts, ...opts } as FrameworkOptions);
 		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
 		this.aliases = new Collection();
