@@ -16,9 +16,12 @@ module.exports = async function buildPackage(tempjson) {
 		console.error("Build failed, aborting release");
 		throw err;
 	}
+
+	delete tempjson.scripts;
+	delete tempjson.devDependencies;
 	await writeFile(
 		path.join(process.cwd(), "package.json"),
-		JSON.stringify(tempjson, null, 2)
+		JSON.stringify(tempjson)
 	);
 	console.log("Packing npm...");
 	const tarballBuffer = await pack(process.cwd());

@@ -3,12 +3,13 @@ const arox = require("../../dist/index");
 const backend = require("i18next-fs-backend");
 const path = require("node:path");
 const { LogLevel } = require("../../dist/utils/logger/ILogger");
+const { IntentsBitField } = require("discord.js");
 
 const myinstance = i18next.createInstance({
 	supportedLngs: ["en-US", "tr"],
 	fallbackLng: "en-US",
 	defaultNS: "translation",
-	ns: ["translation", "test"],
+	ns: ["translation", "test", "error"],
 	backend: {
 		loadPath: path.join(__dirname, "locales/{{lng}}/{{ns}}.json"),
 	},
@@ -19,7 +20,11 @@ const myinstance = i18next.createInstance({
 myinstance.use(backend);
 
 const client = new arox.Client({
-	intents: 37376,
+	intents: [
+		IntentsBitField.Flags.Guilds,
+		IntentsBitField.Flags.GuildMessages,
+		IntentsBitField.Flags.MessageContent,
+	],
 	prefix: { enabled: true, prefix: "a!" },
 	logger: {
 		level: LogLevel.Trace,
@@ -29,12 +34,12 @@ const client = new arox.Client({
 });
 
 arox.setClient(client);
-const command = new arox.CommandBuilder({
-	name: "arox",
-	description: "Arox test command",
-	slash: true,
-	prefix: true,
-});
+const command = new arox.CommandBuilder(
+	new arox.ApplicationCommandBuilder()
+		.setName("arox")
+		.setDescription("Arox Test Command")
+		.addAliases("a")
+);
 arox.clearClient();
 
 command

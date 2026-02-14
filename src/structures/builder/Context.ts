@@ -1,5 +1,6 @@
 import { Message, User, ChatInputCommandInteraction, Locale } from "discord.js";
-import { Client } from "#structures";
+import { Client } from "../index";
+import { TOptions } from "i18next";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -7,9 +8,9 @@ type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 		: { message: T; args?: string[] };
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
-	public readonly args: string[];
-	public readonly data: T;
-	public locale?: `${Locale}`;
+	readonly args: string[];
+	readonly data: T;
+	locale?: `${Locale}`;
 
 	constructor(
 		public readonly client: Client,
@@ -24,15 +25,15 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		}
 	}
 
-	public isInteraction(): this is Context<ChatInputCommandInteraction> {
+	isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return this.data instanceof ChatInputCommandInteraction;
 	}
 
-	public isMessage(): this is Context<Message> {
+	isMessage(): this is Context<Message> {
 		return this.data instanceof Message;
 	}
 
-	public get author(): User | null {
+	get author(): User | null {
 		if (this.isInteraction()) {
 			return this.data.user;
 		}
@@ -42,11 +43,12 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
-	public t(key: string, args?: Record<string, any>): string {
+	t(key: string, options?: TOptions & { defaultValue?: string }): string {
 		if (!this.client.i18n) {
 			throw new Error("i18n is not initialized");
 		}
-		let locale =
+
+		const locale =
 			this.locale ??
 			(Array.isArray(this.client.i18n.options.fallbackLng)
 				? this.client.i18n.options.fallbackLng[0]
@@ -55,10 +57,16 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 
 		const t = this.client.i18n.getFixedT(locale);
 
-		return t(key, args) as string;
+		const result = t(key, options);
+
+		if (result === key && options?.defaultValue) {
+			return options.defaultValue;
+		}
+
+		return result;
 	}
 
-	public toJSON() {
+	toJSON() {
 		const { data, args, author } = this;
 
 		if (this.isInteraction()) {

@@ -5,7 +5,7 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "#structures";
+import { CommandBuilder } from "../index";
 import path from "path";
 import {
 	getFiles,
@@ -13,10 +13,9 @@ import {
 	getPrefix,
 	I18nLoggerAdapter,
 	Logger,
-} from "#utils";
+} from "../../utils";
 import { FrameworkOptions } from "#types/client.js";
-import { merge } from "lodash";
-import { clearClient, setClient } from "#ctx";
+import { clearClient, setClient } from "../../context";
 import { i18n } from "i18next";
 import { existsSync } from "fs";
 
@@ -28,18 +27,18 @@ const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 export class Client<
 	Ready extends boolean = boolean,
 > extends DiscordClient<Ready> {
-	public readonly logger: Logger;
-	public commands: Collection<string, CommandBuilder>;
-	public aliases: Collection<string, Set<string>>;
-	public readonly prefix: string | false;
-	public i18n: i18n | undefined;
+	readonly logger: Logger;
+	commands: Collection<string, CommandBuilder>;
+	aliases: Collection<string, Set<string>>;
+	readonly prefix: string | false;
+	i18n: i18n | undefined;
 
-	declare public options: Omit<FrameworkOptions, "intents"> & {
+	declare options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
 	};
 
 	constructor(opts: FrameworkOptions) {
-		super(merge({}, defaultOpts, opts) as FrameworkOptions);
+		super({ ...defaultOpts, ...opts } as FrameworkOptions);
 		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
 		this.aliases = new Collection();
@@ -51,9 +50,9 @@ export class Client<
 
 		setClient(this);
 		try {
-			require("../events/ready");
-			require("../events/interaction");
-			if (this.prefix) require("../events/message");
+			require("../../events/ready.js");
+			require("../../events/interaction.js");
+			if (this.prefix) require("../../events/message.js");
 		} finally {
 			clearClient();
 		}
@@ -61,7 +60,7 @@ export class Client<
 	override async login(token?: string) {
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
-				this.loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+				this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
 					this.logger.error("Error loading events:", error)
 				);
 			}
@@ -72,18 +71,18 @@ export class Client<
 		return super.login(token);
 	}
 
-	async loadDir(dir: string) {
+	async #loadDir(dir: string) {
 		if (!existsSync(dir)) {
 			this.logger.debug(`Directory not found: ${dir}`);
 			return;
 		}
 		const files = getFiles(dir);
 		for (const file of files) {
-			await this.loadFile(file);
+			await this.#loadFile(file);
 		}
 	}
 
-	async loadFile(file: string) {
+	async #loadFile(file: string) {
 		try {
 			delete require.cache[require.resolve(file)];
 			setClient(this);
@@ -109,11 +108,7 @@ export class Client<
 
 		const slashCommands = this.commands
 			.filter((cmd) => cmd.supportsSlash)
-			.map((cmd) => ({
-				name: cmd.name,
-				description: cmd.description,
-				options: cmd.options,
-			}));
+			.map((cmd) => cmd.data.toClientJSON(this));
 
 		const rest = new REST({ version: "10" }).setToken(this.token);
 

@@ -1,6 +1,6 @@
 import { Events } from "discord.js";
-import { EventBuilder, Context } from "#structures";
-import { deleteMessageAfterSent } from "#utils";
+import { EventBuilder, Context } from "../structures/index";
+import { deleteMessageAfterSent } from "../utils/index";
 
 new EventBuilder(
 	Events.MessageCreate,
@@ -22,12 +22,28 @@ new EventBuilder(
 		const commandAlias = context.client.aliases.findKey((cmd) =>
 			cmd.has(commandName)
 		);
+		const ctx = new Context(context.client, { message, args });
 
 		let command = context.client.commands.get(commandAlias ?? commandName);
-		if (!command || !command.supportsPrefix) {
+
+		if (!command) {
 			await message
 				.reply({
-					content: "Command not found or disabled.",
+					content: ctx.t("error.command.notfound", {
+						defaultValue: "Command not found or disabled.",
+					}),
+					allowedMentions: { repliedUser: false },
+				})
+				.then(deleteMessageAfterSent);
+			return;
+		}
+
+		if (!command.supportsPrefix) {
+			await message
+				.reply({
+					content: ctx.t("error.command.disabled", {
+						defaultValue: "Command not found or disabled.",
+					}),
 					allowedMentions: { repliedUser: false },
 				})
 				.then(deleteMessageAfterSent);
@@ -35,14 +51,13 @@ new EventBuilder(
 		}
 
 		try {
-			const ctx = new Context(context.client, { message, args });
 			context.logger.debug(
-				`${ctx.author?.tag ?? "Unknown"} used ${command.name}(message)`
+				`${ctx.author?.tag ?? "Unknown"} used ${command.data.name}(message)`
 			);
 			if (command._onMessage) await command._onMessage(ctx.toJSON());
 		} catch (error) {
 			context.client.logger.error(
-				`Error executing command ${command.name}:`,
+				`Error executing command ${command.data.name}:`,
 				error
 			);
 		}

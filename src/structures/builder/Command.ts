@@ -1,82 +1,58 @@
-import {
-	ApplicationCommandOptionData,
-	ChatInputCommandInteraction,
-	Message,
-} from "discord.js";
-import { Context, Client } from "#structures";
-import { Argument } from "./Argument";
-import { currentClient } from "#ctx";
+import { ChatInputCommandInteraction, Message } from "discord.js";
+import { Context, Client } from "../index";
+import { currentClient } from "../../context";
 import { MaybePromise } from "#types/extra.js";
-import { Logger } from "#utils";
+import { Logger } from "../../utils/index";
+import { ApplicationCommandBuilder } from "./Builder";
 
 type MessageContext = NonNullable<ReturnType<Context<Message>["toJSON"]>>;
 type InteractionContext = NonNullable<
 	ReturnType<Context<ChatInputCommandInteraction>["toJSON"]>
 >;
 
-export interface CommandOptions {
-	name: string;
-	description: string;
-	aliases?: string[];
-	options?: (ApplicationCommandOptionData | Argument)[];
-	slash?: boolean;
-	prefix?: boolean;
-}
-
 export class CommandBuilder {
 	public readonly client: Client;
 	public readonly logger: Logger;
+	#supportsSlash: boolean;
+	#supportsPrefix: boolean;
+	_onMessage?: (ctx: MessageContext) => MaybePromise<void>;
+	_onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
 
-	public readonly name: string;
-	public readonly description: string;
-	public readonly aliases: string[];
-	public readonly options: ApplicationCommandOptionData[];
-	private _supportsSlash: boolean;
-	private _supportsPrefix: boolean;
-	public _onMessage?: (ctx: MessageContext) => MaybePromise<void>;
-	public _onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
+	get supportsSlash() {
+		return this.#supportsSlash && this._onInteraction;
+	}
+	get supportsPrefix() {
+		return this.#supportsPrefix && this._onMessage;
+	}
 
-	public get supportsSlash() {
-		return this._supportsSlash && this._onInteraction;
-	}
-	public get supportsPrefix() {
-		return this._supportsPrefix && this._onMessage;
-	}
-	constructor(options: CommandOptions) {
+	constructor(public readonly data: ApplicationCommandBuilder) {
 		const client = currentClient;
 		if (!client) throw new Error("Client is not defined");
 		this.client = client;
 		this.logger = client.logger;
+		let commandJSON = data.toJSON();
+		this.#supportsPrefix = commandJSON.prefix_support ?? false;
+		this.#supportsSlash = commandJSON.slash_support ?? false;
 
-		this.name = options.name;
-		this.description = options.description;
-		this.aliases = options.aliases ?? [];
-
-		this.options = (options.options ?? []).map((opt) => {
-			return opt instanceof Argument ? opt.toJSON() : opt;
-		});
-		this._supportsPrefix = options.prefix ?? false;
-		this._supportsSlash = options.slash ?? false;
-
-		if (!this._supportsPrefix && !this._supportsSlash) {
+		if (!this.#supportsPrefix && !this.#supportsSlash) {
 			throw new Error(
-				`Command ${this.name} must support either slash or prefix commands.`
+				`Command ${data.name} must support either slash or prefix commands.`
 			);
 		}
 
-		if (this.client.commands.has(this.name))
-			throw new Error(`Command name "${this.name}" is already registered.`);
+		if (this.client.commands.has(data.name))
+			throw new Error(`Command name "${data.name}" is already registered.`);
 
 		const existingAliasOwner = this.client.aliases.findKey((aliases) =>
-			aliases.has(this.name)
+			aliases.has(data.name)
 		);
 		if (existingAliasOwner) {
 			throw new Error(
-				`Command name "${this.name}" is already registered as an alias for command "${existingAliasOwner}".`
+				`Command name "${data.name}" is already registered as an alias for command "${existingAliasOwner}".`
 			);
 		}
 
-		for (const alias of this.aliases) {
+		for (const alias of commandJSON.aliases) {
 			if (this.client.commands.has(alias)) {
 				throw new Error(
 					`Alias "${alias}" is already registered as a command name.`
@@ -92,11 +68,11 @@ export class CommandBuilder {
 			}
 		}
 
-		this.client.commands.set(this.name, this);
-		if (this.aliases.length > 0) {
-			this.client.aliases.set(this.name, new Set(this.aliases));
+		this.client.commands.set(commandJSON.name, this);
+		if (commandJSON.aliases.length > 0) {
+			this.client.aliases.set(commandJSON.name, new Set(commandJSON.aliases));
 		}
-		this.logger.debug(`Loaded Command ${this.name}`);
+		this.logger.debug(`Loaded Command ${commandJSON.name}`);
 	}
 
 	onMessage(func: (ctx: MessageContext) => MaybePromise<void>) {
