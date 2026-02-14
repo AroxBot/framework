@@ -39,7 +39,7 @@
 		"i18next": "^25.8.0"
 	},
 	"devDependencies": {
-		"@swc/cli": "^0.7.10",
+		"@swc/cli": "^0.8.0",
 		"@types/lodash": "^4.17.23",
 		"@types/node": "^25.0.9",
 		"husky": "^9.1.7",
