@@ -1,0 +1,12 @@
+{
+	"ping": {
+		"name": "ping",
+		"description": "Check the bot's latency",
+		"options": {
+			"ephemeral": {
+				"name": "ephemeral",
+				"description": "Whether to send the response as ephemeral"
+			}
+		}
+	}
+}

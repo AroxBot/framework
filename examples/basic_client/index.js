@@ -9,13 +9,14 @@ const myinstance = i18next.createInstance({
 	supportedLngs: ["en-US", "tr"],
 	fallbackLng: "en-US",
 	defaultNS: "translation",
-	ns: ["translation", "test", "error"],
+	ns: ["translation", "test", "error", "commands"],
 	backend: {
 		loadPath: path.join(__dirname, "locales/{{lng}}/{{ns}}.json"),
 	},
 	interpolation: {
 		escapeValue: false,
 	},
+	preload: ["en-US", "tr"],
 });
 myinstance.use(backend);
 
@@ -26,37 +27,18 @@ const client = new arox.Client({
 		IntentsBitField.Flags.MessageContent,
 	],
 	prefix: { enabled: true, prefix: "a!" },
+	includePaths: ["events", "commands"],
 	logger: {
 		level: LogLevel.Trace,
+		depth: 5,
 	},
-	autoRegisterCommands: false,
+	autoRegisterCommands: true,
 	i18n: myinstance,
 });
 
-arox.setClient(client);
-const command = new arox.CommandBuilder(
-	new arox.ApplicationCommandBuilder()
-		.setName("arox")
-		.setDescription("Arox Test Command")
-		.addAliases("a")
-);
-arox.clearClient();
-
-command
-	.onMessage(function (ctx) {
-		const { message, t, author } = ctx;
-		void message.reply(
-			t("test:hello", { user: author?.username ?? "Unknown" })
-		);
-	})
-	.onInteraction(function (ctx) {
-		const { interaction, t, author } = ctx;
-		void interaction.reply(
-			t("test:hello", { user: author?.username ?? "Unknown" })
-		);
-	});
-
 async function init() {
+	await myinstance.init();
+
 	await client.login(process.env.BOT_TOKEN);
 }
 void init();

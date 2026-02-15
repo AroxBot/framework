@@ -108,7 +108,7 @@ export class Client<
 
 		const slashCommands = this.commands
 			.filter((cmd) => cmd.supportsSlash)
-			.map((cmd) => cmd.data.toClientJSON(this));
+			.map((cmd) => cmd.data.toClientJSON());
 
 		const rest = new REST({ version: "10" }).setToken(this.token);
 

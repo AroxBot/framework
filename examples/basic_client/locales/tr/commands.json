@@ -1,0 +1,12 @@
+{
+	"ping": {
+		"name": "ping",
+		"description": "Botun gecikmesini kontrol et",
+		"options": {
+			"ephemeral": {
+				"name": "gizli",
+				"description": "Yanıtı gizli olarak gönderip göndermeyeceği"
+			}
+		}
+	}
+}

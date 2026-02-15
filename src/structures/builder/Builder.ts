@@ -3,7 +3,13 @@ import {
 	RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from "discord.js";
 import { normalizeArray } from "../../utils/normalizeArray";
-import { Client } from "../core";
+
+import { currentClient } from "../../context";
+import {
+	applyLocalization,
+	applyOptionsLocalization,
+	getFallbackLng,
+} from "../../utils/localeMap";
 
 export interface ApplicationJSONBody extends RESTPostAPIChatInputApplicationCommandsJSONBody {
 	prefix_support: boolean;
@@ -42,13 +48,37 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		Reflect.set(this, "slash_support", support);
 		return this;
 	}
+
+	autoSet(namespace: string, key: string) {
+		const client = currentClient;
+		if (!client?.i18n) {
+			throw new Error("autoSet requires i18n to be configured on the client.");
+		}
+		const i18nInstance = client.i18n;
+		const fallbackLng = getFallbackLng(i18nInstance);
+		const keyPath = `${namespace}:${key}`;
+
+		// Apply to command (name, description, localizations)
+		applyLocalization(i18nInstance, fallbackLng, this, keyPath);
+
+		// Apply to all options recursively (subcommands, groups, etc.)
+		if (this.options.length > 0) {
+			applyOptionsLocalization(
+				i18nInstance,
+				fallbackLng,
+				this.options as any,
+				keyPath
+			);
+		}
+
+		return this;
+	}
+
 	override toJSON(): ApplicationJSONBody {
 		return super.toJSON() as ApplicationJSONBody;
 	}
 
-	toClientJSON(
-		client: Client
-	): ReturnType<ApplicationCommandBuilder["toJSON"]> {
+	toClientJSON(): ReturnType<ApplicationCommandBuilder["toJSON"]> {
 		return {
 			...this.toJSON(),
 		};
