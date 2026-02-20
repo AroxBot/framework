@@ -47,7 +47,6 @@ export class Client<
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
-
 		setClient(this);
 		try {
 			require("../../events/ready.js");
@@ -57,10 +56,10 @@ export class Client<
 			clearClient();
 		}
 	}
-	override async login(token?: string) {
+	async login(token?: string) {
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
-				this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
 					this.logger.error("Error loading events:", error)
 				);
 			}
