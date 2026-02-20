@@ -60,7 +60,7 @@ export class Client<
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
 				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
-					this.logger.error("Error loading events:", error)
+					this.logger.error(`Error loading ${p}:`, error)
 				);
 			}
 		}
