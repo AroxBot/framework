@@ -36,6 +36,29 @@ const client = new arox.Client({
 	i18n: myinstance,
 });
 
+arox.setClient(client);
+const command = new arox.CommandBuilder(
+	new arox.ApplicationCommandBuilder()
+		.setName("arox")
+		.setDescription("Arox Test Command")
+		.addAliases("a")
+);
+arox.clearClient();
+
+command
+	.onMessage(function (ctx) {
+		const { message, t, author } = ctx;
+		void message.reply(
+			t("test:hello", { user: author?.username ?? "Unknown" })
+		);
+	})
+	.onInteraction(function (ctx) {
+		const { interaction, t, author } = ctx;
+		void interaction.reply(
+			t("test:hello", { user: author?.username ?? "Unknown" })
+		);
+	});
+
 async function init() {
 	await myinstance.init();
 

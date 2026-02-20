@@ -74,7 +74,7 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		return this;
 	}
 
-	override toJSON(): ApplicationJSONBody {
+	toJSON(): ApplicationJSONBody {
 		return super.toJSON() as ApplicationJSONBody;
 	}
 
