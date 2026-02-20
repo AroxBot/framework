@@ -56,7 +56,8 @@ export class Client<
 			clearClient();
 		}
 	}
-	async login(token?: string) {
+	//@ts-ignore
+	override async login(token?: string) {
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
 				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
