@@ -60,8 +60,8 @@ export class Client<
 	override async login(token?: string) {
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
-				this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
-					this.logger.error("Error loading events:", error)
+				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
+					this.logger.error(`Error loading ${p}:`, error)
 				);
 			}
 		}
