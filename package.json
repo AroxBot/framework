@@ -27,27 +27,27 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"check": "oxfmt --check && oxlint --type-aware --type-check",
 		"format": "oxfmt",
-		"build:js": "swc src -d dist --strip-leading-paths --copy-files",
+		"build:js": "node ./scripts/build.js",
 		"build:dts": "tsc --emitDeclarationOnly",
-		"build": "npm run build:js && node ./scripts/actions/patch.js && npm run build:dts"
+		"build": "npm run build:js && npm run build:dts"
 	},
 	"dependencies": {
 		"@sapphire/timestamp": "^1.0.5",
-		"@swc/helpers": "^0.5.18",
 		"colorette": "^2.0.20",
 		"fast-glob": "^3.3.3",
 		"i18next": "^25.8.0"
 	},
 	"devDependencies": {
-		"@swc/cli": "^0.8.0",
 		"@types/node": "~25",
+		"esbuild": "^0.27.3",
 		"husky": "^9.1.7",
 		"i18next-fs-backend": "^2.6.1",
 		"libnpmpack": "~9",
 		"oxfmt": "^0.35.0",
 		"oxlint": "^1.39.0",
 		"oxlint-tsgolint": "^0.15.0",
-		"typescript": "~5"
+		"typescript": "~5",
+		"unplugin-oxc": "^0.5.7"
 	},
 	"peerDependencies": {
 		"discord.js": ">=14.25.1"

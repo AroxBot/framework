@@ -2,7 +2,6 @@ const i18next = require("i18next");
 const arox = require("../../dist/index");
 const backend = require("i18next-fs-backend");
 const path = require("node:path");
-const { LogLevel } = require("../../dist/utils/logger/ILogger");
 const { IntentsBitField } = require("discord.js");
 
 const myinstance = i18next.createInstance({
@@ -27,7 +26,7 @@ const client = new arox.Client({
 	],
 	prefix: { enabled: true, prefix: "a!" },
 	logger: {
-		level: LogLevel.Trace,
+		level: arox.LogLevel.DEBUG,
 	},
 	autoRegisterCommands: false,
 	i18n: myinstance,
@@ -57,6 +56,7 @@ command
 	});
 
 async function init() {
-	await client.login(process.env.BOT_TOKEN);
+	const token = process.env.DISCORD_TOKEN ?? process.env.BOT_TOKEN;
+	await client.login(token);
 }
 void init();

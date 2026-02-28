@@ -8,6 +8,7 @@ import type { ILogger } from "./ILogger";
 import { LogLevel } from "./ILogger";
 import { LoggerModule } from "i18next";
 
+export { LogLevel } from "./ILogger";
 export class Logger implements ILogger {
 	public level: LogLevel;
 	public readonly formats: Map<LogLevel, LoggerLevel>;
