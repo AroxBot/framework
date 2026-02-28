@@ -40,15 +40,14 @@
 	},
 	"devDependencies": {
 		"@swc/cli": "^0.8.0",
-		"@types/lodash": "^4.17.23",
-		"@types/node": "^25.0.9",
+		"@types/node": "~25",
 		"husky": "^9.1.7",
 		"i18next-fs-backend": "^2.6.1",
-		"libnpmpack": "^9.0.12",
+		"libnpmpack": "~9",
 		"oxfmt": "^0.35.0",
 		"oxlint": "^1.39.0",
 		"oxlint-tsgolint": "^0.15.0",
-		"typescript": "^5.9.3"
+		"typescript": "~5"
 	},
 	"peerDependencies": {
 		"discord.js": ">=14.25.1"

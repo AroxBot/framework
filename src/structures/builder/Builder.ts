@@ -47,7 +47,7 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 	}
 
 	toClientJSON(
-		client: Client
+		_client: Client
 	): ReturnType<ApplicationCommandBuilder["toJSON"]> {
 		return {
 			...this.toJSON(),

@@ -237,8 +237,8 @@ export class LoggerStyle {
 		if (styles.length === 0) return colorette.reset;
 		if (styles.length === 1) return styles[0];
 
-		return (text: string) =>
-			styles.reduce((result, style) => style(result), text);
+		return ((text: string) =>
+			styles.reduce((result, style) => style(result), text)) as Color;
 	}
 }
 
