@@ -1,8 +1,9 @@
 {
 	"name": "framework",
-	"version": "0.1.1",
+	"version": "0.1.2-beta.1",
 	"description": "",
 	"keywords": [
+		"arox",
 		"discord.js",
 		"framework"
 	],
@@ -12,6 +13,9 @@
 	},
 	"license": "Apache-2.0",
 	"author": "vrdons",
+	"contributors": [
+		"fhyrox"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/AroxBot/framework.git"
