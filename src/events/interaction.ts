@@ -1,5 +1,9 @@
 import { Events, MessageFlags } from "discord.js";
-import { EventBuilder, Context } from "../structures/index";
+import {
+	COMMAND_DISABLED_MESSAGE,
+	COMMAND_EXECUTE_ERROR_MESSAGE,
+} from "@constants/messages.js";
+import { EventBuilder, Context } from "@structures/index.js";
 
 new EventBuilder(Events.InteractionCreate, false).onExecute(
 	async function (context, interaction) {
@@ -11,7 +15,7 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 		if (!command) {
 			await interaction.reply({
 				content: ctx.t("error.command.notfound", {
-					defaultValue: "Command not found or disabled.",
+					defaultValue: COMMAND_DISABLED_MESSAGE,
 				}),
 				flags: MessageFlags.Ephemeral,
 			});
@@ -20,7 +24,7 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 		if (!command.supportsSlash) {
 			await interaction.reply({
 				content: ctx.t("error.command.disabled", {
-					defaultValue: "Command not found or disabled.",
+					defaultValue: COMMAND_DISABLED_MESSAGE,
 				}),
 				flags: MessageFlags.Ephemeral,
 			});
@@ -39,12 +43,12 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			);
 			if (interaction.replied || interaction.deferred) {
 				await interaction.followUp({
-					content: "There was an error while executing this command!",
+					content: COMMAND_EXECUTE_ERROR_MESSAGE,
 					flags: MessageFlags.Ephemeral,
 				});
 			} else {
 				await interaction.reply({
-					content: "There was an error while executing this command!",
+					content: COMMAND_EXECUTE_ERROR_MESSAGE,
 					flags: MessageFlags.Ephemeral,
 				});
 			}

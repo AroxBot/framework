@@ -1,5 +1,5 @@
 import { ClientOptions } from "discord.js";
-import { LoggerOptions } from "../src/utils/logger/Logger";
+import type { LoggerOptions } from "./logger.js";
 import { i18n } from "i18next";
 
 export interface FrameworkPaths {

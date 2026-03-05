@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction, Message } from "discord.js";
-import { Context, Client } from "../index";
-import { currentClient } from "../../context";
-import { MaybePromise } from "#types/extra.js";
-import { Logger } from "../../utils/index";
-import { ApplicationCommandBuilder } from "./Builder";
+import { currentClient } from "@context";
+import { Context, Client } from "@structures/index.js";
+import { Logger } from "@utils/index.js";
+import type { MaybePromise } from "#types/extra.js";
+import { ApplicationCommandBuilder } from "@structures/builder/Builder.js";
 
 type MessageContext = NonNullable<ReturnType<Context<Message>["toJSON"]>>;
 type InteractionContext = NonNullable<
@@ -30,29 +30,31 @@ export class CommandBuilder {
 		if (!client) throw new Error("Client is not defined");
 		this.client = client;
 		this.logger = client.logger;
-		let commandJSON = data.toJSON();
+		const commandJSON = data.toJSON();
+		const { name, aliases } = commandJSON;
 		this.#supportsPrefix = commandJSON.prefix_support ?? false;
 		this.#supportsSlash = commandJSON.slash_support ?? false;
 
 		if (!this.#supportsPrefix && !this.#supportsSlash) {
 			throw new Error(
-				`Command ${data.name} must support either slash or prefix commands.`
+				`Command ${name} must support either slash or prefix commands.`
 			);
 		}
 
-		if (this.client.commands.has(data.name))
-			throw new Error(`Command name "${data.name}" is already registered.`);
+		if (this.client.commands.has(name)) {
+			throw new Error(`Command name "${name}" is already registered.`);
+		}
 
 		const existingAliasOwner = this.client.aliases.findKey((aliases) =>
-			aliases.has(data.name)
+			aliases.has(name)
 		);
 		if (existingAliasOwner) {
 			throw new Error(
-				`Command name "${data.name}" is already registered as an alias for command "${existingAliasOwner}".`
+				`Command name "${name}" is already registered as an alias for command "${existingAliasOwner}".`
 			);
 		}
 
-		for (const alias of commandJSON.aliases) {
+		for (const alias of aliases) {
 			if (this.client.commands.has(alias)) {
 				throw new Error(
 					`Alias "${alias}" is already registered as a command name.`
@@ -68,11 +70,11 @@ export class CommandBuilder {
 			}
 		}
 
-		this.client.commands.set(commandJSON.name, this);
-		if (commandJSON.aliases.length > 0) {
-			this.client.aliases.set(commandJSON.name, new Set(commandJSON.aliases));
+		this.client.commands.set(name, this);
+		if (aliases.length > 0) {
+			this.client.aliases.set(name, new Set(aliases));
 		}
-		this.logger.debug(`Loaded Command ${commandJSON.name}`);
+		this.logger.debug(`Loaded Command ${name}`);
 	}
 
 	onMessage(func: (ctx: MessageContext) => MaybePromise<void>) {

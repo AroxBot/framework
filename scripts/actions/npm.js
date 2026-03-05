@@ -1,9 +1,8 @@
-const { exec } = require("../utils/util");
-const { checkVersionExists, NPM_URL, getNpmDistTag } = require("../utils/npm");
-
-const packageJson = require("../../package.json");
-const build = require("../utils/build");
-const { getSha } = require("../utils/github");
+import packageJson from "../../package.json" with { type: "json" };
+import build from "../utils/build.js";
+import { getSha } from "../utils/github.js";
+import { checkVersionExists, NPM_URL, getNpmDistTag } from "../utils/npm.js";
+import { exec, isMain } from "../utils/util.js";
 
 async function buildProject() {
 	const owner = process.env.NPM_ORG;
@@ -27,7 +26,10 @@ async function buildProject() {
 	const npmVerExists = checkVersionExists(tempjson.name, version, NPM_URL);
 
 	let buildPath = null;
-	let err = false;
+	const ensureBuildPath = async () => {
+		buildPath ??= await build(tempjson);
+		return buildPath;
+	};
 
 	if (npmVerExists) {
 		console.log(`Version (npm) ${version} already exists`);
@@ -35,26 +37,24 @@ async function buildProject() {
 		try {
 			console.log(`npm version ${version} does not exist`);
 
-			buildPath ??= await build(tempjson);
+			const tarballPath = await ensureBuildPath();
 
 			const distTag = getNpmDistTag(version);
 			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
 			exec(
-				`npm publish "${buildPath}" --provenance --registry=${NPM_URL}${tagArg}`,
+				`npm publish "${tarballPath}" --provenance --registry=${NPM_URL}${tagArg}`,
 				{
 					stdio: "inherit",
 				}
 			);
 		} catch (error) {
 			console.log(error);
-			err = true;
+			throw new Error("Failed to publish package to npm");
 		}
-
-		if (err) throw new Error("Failed to publish");
 	}
 }
 
-if (require.main === module) {
+if (isMain(import.meta.url)) {
 	buildProject().catch((err) => {
 		console.error("Patch failed:", err);
 		process.exit(1);

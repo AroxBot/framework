@@ -4,6 +4,14 @@
 		"typeRoots": ["./types", "./node_modules/@types"],
 		"outDir": "./dist",
 		"rootDir": "./src",
+		"paths": {
+			"#types/*": ["./types/*"],
+			"@types/*": ["./types/*"],
+			"@constants/*": ["./src/constants/*"],
+			"@context": ["./src/context.ts"],
+			"@structures/*": ["./src/structures/*"],
+			"@utils/*": ["./src/utils/*"]
+		},
 
 		"module": "nodenext",
 		"moduleResolution": "nodenext",

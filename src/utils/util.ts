@@ -1,4 +1,4 @@
-import { PrefixOptions } from "#types/client.js";
+import type { PrefixOptions } from "#types/client.js";
 import { InteractionResponse, Message } from "discord.js";
 
 export function deleteMessageAfterSent(

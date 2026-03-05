@@ -1,23 +1,24 @@
 import {
 	Client as DiscordClient,
 	Collection,
+	IntentsBitField,
 	REST,
 	Routes,
-	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "../index";
-import path from "path";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import type { i18n } from "i18next";
+import type { FrameworkOptions } from "#types/client.js";
+import { clearClient, setClient } from "@context";
 import {
 	getFiles,
 	getProjectRoot,
 	getPrefix,
 	I18nLoggerAdapter,
 	Logger,
-} from "../../utils";
-import { FrameworkOptions } from "#types/client.js";
-import { clearClient, setClient } from "../../context";
-import { i18n } from "i18next";
-import { existsSync } from "fs";
+} from "@utils/index.js";
+import { CommandBuilder } from "@structures/index.js";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	includePaths: ["events", "commands"],
@@ -47,22 +48,14 @@ export class Client<
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
-
-		setClient(this);
-		try {
-			require("../../events/ready.js");
-			require("../../events/interaction.js");
-			if (this.prefix) require("../../events/message.js");
-		} finally {
-			clearClient();
-		}
 	}
 	override async login(token?: string) {
-		if (this.options.includePaths) {
-			for (const p of this.options.includePaths) {
-				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
-					this.logger.error(`Error loading ${p}:`, error)
-				);
+		await this.#loadCoreEvents();
+		for (const includePath of this.options.includePaths) {
+			try {
+				await this.#loadDir(path.join(getProjectRoot(), includePath));
+			} catch (error) {
+				this.logger.error(`Error loading ${includePath}:`, error);
 			}
 		}
 		if (this.i18n && !this.i18n.isInitialized) {
@@ -82,11 +75,30 @@ export class Client<
 		}
 	}
 
+	async #loadCoreEvents() {
+		setClient(this);
+		try {
+			const coreEventLoaders = [
+				() => import("../../events/ready.js"),
+				() => import("../../events/interaction.js"),
+			] as const;
+			for (const load of coreEventLoaders) {
+				await load();
+			}
+			if (this.prefix) {
+				await import("../../events/message.js");
+			}
+		} finally {
+			clearClient();
+		}
+	}
+
 	async #loadFile(file: string) {
 		try {
-			delete require.cache[require.resolve(file)];
 			setClient(this);
-			require(file);
+			const resolvedFileUrl = pathToFileURL(file);
+			resolvedFileUrl.searchParams.set("ts", Date.now().toString(36));
+			await import(resolvedFileUrl.href);
 		} catch (error) {
 			this.logger.error(`Error loading file ${file}:`, error);
 		} finally {

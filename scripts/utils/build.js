@@ -1,11 +1,13 @@
-const { exec } = require("./util");
+import { readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import pack from "libnpmpack";
+import { exec } from "./util.js";
 
-const { writeFile } = require("node:fs/promises");
-const path = require("node:path");
-const pack = require("libnpmpack");
-const { tmpdir } = require("node:os");
+export default async function buildPackage(tempjson) {
+	const packageJsonPath = path.join(process.cwd(), "package.json");
+	const originalPackageJson = await readFile(packageJsonPath, "utf8");
 
-module.exports = async function buildPackage(tempjson) {
 	try {
 		console.log("Installing dependencies");
 		exec("npm ci", { stdio: "inherit" });
@@ -19,14 +21,15 @@ module.exports = async function buildPackage(tempjson) {
 
 	delete tempjson.scripts;
 	delete tempjson.devDependencies;
-	await writeFile(
-		path.join(process.cwd(), "package.json"),
-		JSON.stringify(tempjson)
-	);
-	console.log("Packing npm...");
-	const tarballBuffer = await pack(process.cwd());
-	const tempPath = path.join(tmpdir(), "publish.tgz");
-	await writeFile(tempPath, tarballBuffer);
-	console.log(`Written tarball to temp path: ${tempPath}`);
-	return tempPath;
-};
+	try {
+		await writeFile(packageJsonPath, JSON.stringify(tempjson));
+		console.log("Packing npm...");
+		const tarballBuffer = await pack(process.cwd());
+		const tempPath = path.join(tmpdir(), "publish.tgz");
+		await writeFile(tempPath, tarballBuffer);
+		console.log(`Written tarball to temp path: ${tempPath}`);
+		return tempPath;
+	} finally {
+		await writeFile(packageJsonPath, originalPackageJson);
+	}
+}

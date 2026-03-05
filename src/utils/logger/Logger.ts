@@ -4,11 +4,29 @@ import { inspect, type InspectOptions } from "util";
 import * as colorette from "colorette";
 import type { Color } from "colorette";
 import { Timestamp } from "@sapphire/timestamp";
-import type { ILogger } from "./ILogger";
-import { LogLevel } from "./ILogger";
-import { LoggerModule } from "i18next";
+import type { ILogger } from "./ILogger.js";
+import { LogLevel } from "./ILogger.js";
+import type {
+	LoggerFormatOptions,
+	LoggerLevelOptions,
+	LoggerOptions,
+	LoggerStyleOptions,
+	LoggerStyleResolvable,
+	LoggerTimestampFormatter,
+	LoggerTimestampOptions,
+} from "#types/logger.js";
+import type { LoggerModule } from "i18next";
 
-export { LogLevel } from "./ILogger";
+export { LogLevel } from "./ILogger.js";
+export type {
+	LoggerFormatOptions,
+	LoggerLevelOptions,
+	LoggerOptions,
+	LoggerStyleOptions,
+	LoggerStyleResolvable,
+	LoggerTimestampFormatter,
+	LoggerTimestampOptions,
+} from "#types/logger.js";
 export class Logger implements ILogger {
 	public level: LogLevel;
 	public readonly formats: Map<LogLevel, LoggerLevel>;
@@ -297,51 +315,6 @@ export class LoggerLevel {
 }
 
 export default Logger.getInstance();
-
-export interface LoggerOptions {
-	stdout?: NodeJS.WritableStream;
-	stderr?: NodeJS.WritableStream;
-	defaultFormat?: LoggerLevelOptions;
-	format?: LoggerFormatOptions;
-	level?: LogLevel;
-	join?: string;
-	depth?: number;
-}
-
-export interface LoggerFormatOptions {
-	trace?: LoggerLevelOptions;
-	debug?: LoggerLevelOptions;
-	info?: LoggerLevelOptions;
-	warn?: LoggerLevelOptions;
-	error?: LoggerLevelOptions;
-	fatal?: LoggerLevelOptions;
-	none?: LoggerLevelOptions;
-}
-
-export interface LoggerLevelOptions {
-	timestamp?: LoggerTimestampOptions | null;
-	infix?: string;
-	message?: LoggerStyleResolvable | null;
-}
-
-export interface LoggerTimestampOptions {
-	pattern?: string;
-	utc?: boolean;
-	color?: LoggerStyleResolvable | null;
-	formatter?: LoggerTimestampFormatter;
-}
-
-export interface LoggerTimestampFormatter {
-	(timestamp: string): string;
-}
-
-export interface LoggerStyleOptions {
-	effects?: LoggerStyleEffect[];
-	text?: LoggerStyleText;
-	background?: LoggerStyleBackground;
-}
-
-export type LoggerStyleResolvable = Color | LoggerStyleOptions;
 
 export enum LoggerStyleEffect {
 	Reset = "reset",

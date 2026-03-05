@@ -1,8 +1,12 @@
-const i18next = require("i18next");
-const arox = require("../../dist/index");
-const backend = require("i18next-fs-backend");
-const path = require("node:path");
-const { IntentsBitField } = require("discord.js");
+import { IntentsBitField } from "discord.js";
+import i18next from "i18next";
+import backend from "i18next-fs-backend";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import * as arox from "../../dist/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const myinstance = i18next.createInstance({
 	supportedLngs: ["en-US", "tr"],
@@ -26,7 +30,7 @@ const client = new arox.Client({
 	],
 	prefix: { enabled: true, prefix: "a!" },
 	logger: {
-		level: arox.LogLevel.DEBUG,
+		level: arox.LogLevel.Debug,
 	},
 	autoRegisterCommands: false,
 	i18n: myinstance,
