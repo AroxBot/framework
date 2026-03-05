@@ -4,6 +4,9 @@
 		"typeRoots": ["./types", "./node_modules/@types"],
 		"outDir": "./dist",
 		"rootDir": "./src",
+		"paths": {
+			"#types/*": ["./types/*"]
+		},
 
 		"module": "nodenext",
 		"moduleResolution": "nodenext",

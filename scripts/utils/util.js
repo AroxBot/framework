@@ -1,6 +1,7 @@
-const { execSync } = require("node:child_process");
+import { execSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
-function exec(command, options = {}) {
+export function exec(command, options = {}) {
 	return execSync(command, {
 		...options,
 		stdio: ["ignore", "pipe", "pipe"],
@@ -8,8 +9,11 @@ function exec(command, options = {}) {
 	});
 }
 
-function generateChangelog(version) {
+export function generateChangelog(version) {
 	return exec(`git-cliff --tag ${version} --unreleased`).trim();
 }
 
-module.exports = { exec, generateChangelog };
+export function isMain(importMetaUrl) {
+	const entry = process.argv[1];
+	return entry ? importMetaUrl === pathToFileURL(entry).href : false;
+}

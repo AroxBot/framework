@@ -1,6 +1,6 @@
 import { Events } from "discord.js";
-import { EventBuilder, Context } from "../structures/index";
-import { deleteMessageAfterSent } from "../utils/index";
+import { EventBuilder, Context } from "../structures/index.js";
+import { deleteMessageAfterSent } from "../utils/index.js";
 
 new EventBuilder(
 	Events.MessageCreate,

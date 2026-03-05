@@ -1,4 +1,4 @@
-const { EventBuilder } = require("../../../dist");
+import { EventBuilder } from "../../../dist/index.js";
 
 new EventBuilder("clientReady", false, (context) => {
 	context.logger.log("Client connected!");

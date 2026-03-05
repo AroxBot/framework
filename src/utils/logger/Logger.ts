@@ -4,11 +4,11 @@ import { inspect, type InspectOptions } from "util";
 import * as colorette from "colorette";
 import type { Color } from "colorette";
 import { Timestamp } from "@sapphire/timestamp";
-import type { ILogger } from "./ILogger";
-import { LogLevel } from "./ILogger";
+import type { ILogger } from "./ILogger.js";
+import { LogLevel } from "./ILogger.js";
 import { LoggerModule } from "i18next";
 
-export { LogLevel } from "./ILogger";
+export { LogLevel } from "./ILogger.js";
 export class Logger implements ILogger {
 	public level: LogLevel;
 	public readonly formats: Map<LogLevel, LoggerLevel>;

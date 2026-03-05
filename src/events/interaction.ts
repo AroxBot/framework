@@ -1,5 +1,5 @@
 import { Events, MessageFlags } from "discord.js";
-import { EventBuilder, Context } from "../structures/index";
+import { EventBuilder, Context } from "../structures/index.js";
 
 new EventBuilder(Events.InteractionCreate, false).onExecute(
 	async function (context, interaction) {

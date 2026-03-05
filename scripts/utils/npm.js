@@ -1,14 +1,14 @@
-const { exec } = require("./util");
+import { exec } from "./util.js";
 
-const NPM_URL = "https://registry.npmjs.org";
-const GITHUB_URL = "https://npm.pkg.github.com";
+export const NPM_URL = "https://registry.npmjs.org";
+export const GITHUB_URL = "https://npm.pkg.github.com";
 
-function getNpmDistTag(version) {
+export function getNpmDistTag(version) {
 	const pre = /alpha|beta|rc/i.exec(version);
 	return pre ? pre[0].toLowerCase() : "latest";
 }
 
-function checkVersionExists(packageName, version, registry) {
+export function checkVersionExists(packageName, version, registry) {
 	try {
 		exec(`npm view ${packageName}@${version} --registry=${registry}`, {
 			stdio: "ignore",
@@ -18,10 +18,3 @@ function checkVersionExists(packageName, version, registry) {
 		return false;
 	}
 }
-
-module.exports = {
-	GITHUB_URL,
-	NPM_URL,
-	getNpmDistTag,
-	checkVersionExists,
-};

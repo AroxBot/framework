@@ -1,11 +1,10 @@
-const { exec } = require("./util");
+import { writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import pack from "libnpmpack";
+import { exec } from "./util.js";
 
-const { writeFile } = require("node:fs/promises");
-const path = require("node:path");
-const pack = require("libnpmpack");
-const { tmpdir } = require("node:os");
-
-module.exports = async function buildPackage(tempjson) {
+export default async function buildPackage(tempjson) {
 	try {
 		console.log("Installing dependencies");
 		exec("npm ci", { stdio: "inherit" });
@@ -29,4 +28,4 @@ module.exports = async function buildPackage(tempjson) {
 	await writeFile(tempPath, tarballBuffer);
 	console.log(`Written tarball to temp path: ${tempPath}`);
 	return tempPath;
-};
+}

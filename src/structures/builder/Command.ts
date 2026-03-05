@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction, Message } from "discord.js";
-import { Context, Client } from "../index";
-import { currentClient } from "../../context";
-import { MaybePromise } from "#types/extra.js";
-import { Logger } from "../../utils/index";
-import { ApplicationCommandBuilder } from "./Builder";
+import { Context, Client } from "../index.js";
+import { currentClient } from "../../context.js";
+import type { MaybePromise } from "#types/extra.js";
+import { Logger } from "../../utils/index.js";
+import { ApplicationCommandBuilder } from "./Builder.js";
 
 type MessageContext = NonNullable<ReturnType<Context<Message>["toJSON"]>>;
 type InteractionContext = NonNullable<

@@ -1,19 +1,13 @@
-const { exec } = require("../utils/util");
-const {
+import packageJson from "../../package.json" with { type: "json" };
+import build from "../utils/build.js";
+import {
 	getRepoInfo,
 	getSha,
 	tagExists,
 	createRelease,
-} = require("../utils/github");
-const {
-	checkVersionExists,
-	GITHUB_URL,
-	getNpmDistTag,
-} = require("../utils/npm");
-
-const packageJson = require("../../package.json");
-const build = require("../utils/build");
-const { generateChangelog } = require("../utils/util");
+} from "../utils/github.js";
+import { checkVersionExists, GITHUB_URL, getNpmDistTag } from "../utils/npm.js";
+import { exec, generateChangelog, isMain } from "../utils/util.js";
 
 async function buildProject() {
 	const github_token = process.env.GITHUB_TOKEN;
@@ -84,7 +78,7 @@ async function buildProject() {
 	}
 }
 
-if (require.main === module) {
+if (isMain(import.meta.url)) {
 	buildProject().catch((err) => {
 		console.error("Patch failed:", err);
 		process.exit(1);

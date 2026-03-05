@@ -1,12 +1,12 @@
-const { execSync } = require("node:child_process");
-const { exec } = require("./util");
-const path = require("node:path");
+import { execSync } from "node:child_process";
+import path from "node:path";
+import { exec } from "./util.js";
 
 function isPrerelease(version) {
 	return /alpha|beta|rc/i.test(version);
 }
 
-function getRepoInfo() {
+export function getRepoInfo() {
 	const repo = process.env.GITHUB_REPOSITORY;
 	if (!repo) {
 		throw new Error("GITHUB_REPOSITORY not found");
@@ -16,7 +16,7 @@ function getRepoInfo() {
 	return { owner, repo: name };
 }
 
-function getSha() {
+export function getSha() {
 	const sha = process.env.GITHUB_SHA;
 	if (!sha) {
 		throw new Error("GITHUB_SHA not found");
@@ -24,7 +24,7 @@ function getSha() {
 	return sha;
 }
 
-function tagExists(tag) {
+export function tagExists(tag) {
 	try {
 		exec(`gh api repos/${process.env.GITHUB_REPOSITORY}/git/ref/tags/${tag}`, {
 			stdio: "ignore",
@@ -35,7 +35,7 @@ function tagExists(tag) {
 	}
 }
 
-function createRelease(version, tgzPath, body = "") {
+export function createRelease(version, tgzPath, body = "") {
 	const sha = getSha();
 
 	console.log(`Creating GitHub Release & Tag: ${version}`);
@@ -58,5 +58,3 @@ function createRelease(version, tgzPath, body = "") {
 
 	console.log(`Release ${version} successfully published.`);
 }
-
-module.exports = { getRepoInfo, getSha, tagExists, createRelease };

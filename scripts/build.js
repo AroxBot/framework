@@ -1,36 +1,44 @@
-const esbuild = require("esbuild");
-const path = require("node:path");
-const fs = require("node:fs/promises");
-const { builtinModules } = require("module");
+import * as esbuild from "esbuild";
+import fs from "node:fs/promises";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { builtinModules } from "node:module";
+import Oxc from "unplugin-oxc/esbuild";
 
-const Oxc = require("unplugin-oxc/esbuild");
 const PLACEHOLDER_REGEX = /\[VI\]\{\{(.+?)\}\}\[\/VI\]/g;
+const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
+const dependencies = Object.keys(packageJson.dependencies ?? {});
+const peerDependencies = Object.keys(packageJson.peerDependencies ?? {});
 
 async function build() {
-	await esbuild.build({
+	const baseBuildOptions = {
 		entryPoints: ["src/index.ts"],
-		outdir: "dist",
 		bundle: true,
 		platform: "node",
-		format: "cjs",
 		target: "node25",
 		sourcemap: false,
-		outbase: "src",
 		tsconfig: "tsconfig.json",
 		external: [
-			"discord.js",
+			...dependencies,
+			...peerDependencies,
 			"@discordjs/*",
-			"#types/*",
-			"fast-glob",
-			"colorette",
-			"i18next",
 			...builtinModules,
 		],
 		plugins: [Oxc()],
+	};
+
+	await esbuild.build({
+		...baseBuildOptions,
+		format: "cjs",
+		outfile: "dist/index.cjs",
 	});
 
-	// 🔥 build bittikten sonra patch çalışsın
+	await esbuild.build({
+		...baseBuildOptions,
+		format: "esm",
+		outfile: "dist/index.js",
+	});
 	await patch();
 
 	console.log("Build + Patch completed");
@@ -59,7 +67,9 @@ async function patch() {
 
 				if (
 					entry.isFile() &&
-					(fullPath.endsWith(".js") || fullPath.endsWith(".mjs"))
+					(fullPath.endsWith(".js") ||
+						fullPath.endsWith(".mjs") ||
+						fullPath.endsWith(".cjs"))
 				) {
 					return [fullPath];
 				}

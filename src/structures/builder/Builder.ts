@@ -2,8 +2,8 @@ import {
 	SlashCommandBuilder,
 	RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from "discord.js";
-import { normalizeArray } from "../../utils/normalizeArray";
-import { Client } from "../core";
+import { normalizeArray } from "../../utils/normalizeArray.js";
+import { Client } from "../core/index.js";
 
 export interface ApplicationJSONBody extends RESTPostAPIChatInputApplicationCommandsJSONBody {
 	prefix_support: boolean;

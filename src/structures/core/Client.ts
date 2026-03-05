@@ -5,17 +5,18 @@ import {
 	Routes,
 	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "../index";
+import { CommandBuilder } from "../index.js";
 import path from "path";
+import { pathToFileURL } from "node:url";
 import {
 	getFiles,
 	getProjectRoot,
 	getPrefix,
 	I18nLoggerAdapter,
 	Logger,
-} from "../../utils";
-import { FrameworkOptions } from "#types/client.js";
-import { clearClient, setClient } from "../../context";
+} from "../../utils/index.js";
+import type { FrameworkOptions } from "#types/client.js";
+import { clearClient, setClient } from "../../context.js";
 import { i18n } from "i18next";
 import { existsSync } from "fs";
 
@@ -47,17 +48,9 @@ export class Client<
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
-
-		setClient(this);
-		try {
-			require("../../events/ready.js");
-			require("../../events/interaction.js");
-			if (this.prefix) require("../../events/message.js");
-		} finally {
-			clearClient();
-		}
 	}
 	override async login(token?: string) {
+		await this.#loadCoreEvents();
 		if (this.options.includePaths) {
 			for (const p of this.options.includePaths) {
 				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
@@ -82,11 +75,25 @@ export class Client<
 		}
 	}
 
+	async #loadCoreEvents() {
+		setClient(this);
+		try {
+			await import("../../events/ready.js");
+			await import("../../events/interaction.js");
+			if (this.prefix) {
+				await import("../../events/message.js");
+			}
+		} finally {
+			clearClient();
+		}
+	}
+
 	async #loadFile(file: string) {
 		try {
-			delete require.cache[require.resolve(file)];
 			setClient(this);
-			require(file);
+			const resolvedFileUrl = pathToFileURL(file);
+			resolvedFileUrl.searchParams.set("ts", Date.now().toString(36));
+			await import(resolvedFileUrl.href);
 		} catch (error) {
 			this.logger.error(`Error loading file ${file}:`, error);
 		} finally {

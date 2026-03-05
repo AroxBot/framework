@@ -19,9 +19,10 @@ export function getFiles(baseDir: string): string[] {
 	});
 }
 export function getProjectRoot(): string {
-	if (!require.main?.filename) {
+	const entryPoint = process.argv[1];
+	if (!entryPoint) {
 		return process.cwd();
 	}
 
-	return path.dirname(require.main.filename);
+	return path.dirname(path.resolve(entryPoint));
 }
