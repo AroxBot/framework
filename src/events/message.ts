@@ -1,6 +1,7 @@
 import { Events } from "discord.js";
-import { EventBuilder, Context } from "../structures/index.js";
-import { deleteMessageAfterSent } from "../utils/index.js";
+import { COMMAND_DISABLED_MESSAGE } from "@constants/messages.js";
+import { EventBuilder, Context } from "@structures/index.js";
+import { deleteMessageAfterSent } from "@utils/index.js";
 
 new EventBuilder(
 	Events.MessageCreate,
@@ -24,13 +25,13 @@ new EventBuilder(
 		);
 		const ctx = new Context(context.client, { message, args });
 
-		let command = context.client.commands.get(commandAlias ?? commandName);
+		const command = context.client.commands.get(commandAlias ?? commandName);
 
 		if (!command) {
 			await message
 				.reply({
 					content: ctx.t("error.command.notfound", {
-						defaultValue: "Command not found or disabled.",
+						defaultValue: COMMAND_DISABLED_MESSAGE,
 					}),
 					allowedMentions: { repliedUser: false },
 				})
@@ -42,7 +43,7 @@ new EventBuilder(
 			await message
 				.reply({
 					content: ctx.t("error.command.disabled", {
-						defaultValue: "Command not found or disabled.",
+						defaultValue: COMMAND_DISABLED_MESSAGE,
 					}),
 					allowedMentions: { repliedUser: false },
 				})

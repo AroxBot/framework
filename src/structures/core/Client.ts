@@ -1,24 +1,24 @@
 import {
 	Client as DiscordClient,
 	Collection,
+	IntentsBitField,
 	REST,
 	Routes,
-	IntentsBitField,
 } from "discord.js";
-import { CommandBuilder } from "../index.js";
-import path from "path";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
+import type { i18n } from "i18next";
+import type { FrameworkOptions } from "#types/client.js";
+import { clearClient, setClient } from "@context";
 import {
 	getFiles,
 	getProjectRoot,
 	getPrefix,
 	I18nLoggerAdapter,
 	Logger,
-} from "../../utils/index.js";
-import type { FrameworkOptions } from "#types/client.js";
-import { clearClient, setClient } from "../../context.js";
-import { i18n } from "i18next";
-import { existsSync } from "fs";
+} from "@utils/index.js";
+import { CommandBuilder } from "@structures/index.js";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	includePaths: ["events", "commands"],
@@ -51,11 +51,11 @@ export class Client<
 	}
 	override async login(token?: string) {
 		await this.#loadCoreEvents();
-		if (this.options.includePaths) {
-			for (const p of this.options.includePaths) {
-				await this.#loadDir(path.join(getProjectRoot(), p)).catch((error) =>
-					this.logger.error(`Error loading ${p}:`, error)
-				);
+		for (const includePath of this.options.includePaths) {
+			try {
+				await this.#loadDir(path.join(getProjectRoot(), includePath));
+			} catch (error) {
+				this.logger.error(`Error loading ${includePath}:`, error);
 			}
 		}
 		if (this.i18n && !this.i18n.isInitialized) {
@@ -78,8 +78,13 @@ export class Client<
 	async #loadCoreEvents() {
 		setClient(this);
 		try {
-			await import("../../events/ready.js");
-			await import("../../events/interaction.js");
+			const coreEventLoaders = [
+				() => import("../../events/ready.js"),
+				() => import("../../events/interaction.js"),
+			] as const;
+			for (const load of coreEventLoaders) {
+				await load();
+			}
 			if (this.prefix) {
 				await import("../../events/message.js");
 			}

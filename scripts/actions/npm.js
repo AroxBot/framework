@@ -26,7 +26,10 @@ async function buildProject() {
 	const npmVerExists = checkVersionExists(tempjson.name, version, NPM_URL);
 
 	let buildPath = null;
-	let err = false;
+	const ensureBuildPath = async () => {
+		buildPath ??= await build(tempjson);
+		return buildPath;
+	};
 
 	if (npmVerExists) {
 		console.log(`Version (npm) ${version} already exists`);
@@ -34,22 +37,20 @@ async function buildProject() {
 		try {
 			console.log(`npm version ${version} does not exist`);
 
-			buildPath ??= await build(tempjson);
+			const tarballPath = await ensureBuildPath();
 
 			const distTag = getNpmDistTag(version);
 			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
 			exec(
-				`npm publish "${buildPath}" --provenance --registry=${NPM_URL}${tagArg}`,
+				`npm publish "${tarballPath}" --provenance --registry=${NPM_URL}${tagArg}`,
 				{
 					stdio: "inherit",
 				}
 			);
 		} catch (error) {
 			console.log(error);
-			err = true;
+			throw new Error("Failed to publish package to npm");
 		}
-
-		if (err) throw new Error("Failed to publish");
 	}
 }
 

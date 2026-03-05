@@ -1,8 +1,8 @@
 import { ClientEvents } from "discord.js";
 import type { MaybePromise } from "#types/extra.js";
-import { currentClient } from "../../context.js";
-import { Client } from "../index.js";
-import { Logger } from "../../utils/index.js";
+import { currentClient } from "@context";
+import { Client } from "@structures/index.js";
+import { Logger } from "@utils/index.js";
 
 type EventArgs<K extends keyof ClientEvents> = ClientEvents[K];
 type EventHandler<K extends keyof ClientEvents> = (

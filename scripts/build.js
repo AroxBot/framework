@@ -10,6 +10,7 @@ const require = createRequire(import.meta.url);
 const packageJson = require("../package.json");
 const dependencies = Object.keys(packageJson.dependencies ?? {});
 const peerDependencies = Object.keys(packageJson.peerDependencies ?? {});
+const JS_EXTENSIONS = [".js", ".mjs", ".cjs"];
 
 async function build() {
 	const baseBuildOptions = {
@@ -28,17 +29,18 @@ async function build() {
 		plugins: [Oxc()],
 	};
 
-	await esbuild.build({
-		...baseBuildOptions,
-		format: "cjs",
-		outfile: "dist/index.cjs",
-	});
-
-	await esbuild.build({
-		...baseBuildOptions,
-		format: "esm",
-		outfile: "dist/index.js",
-	});
+	await Promise.all([
+		esbuild.build({
+			...baseBuildOptions,
+			format: "cjs",
+			outfile: "dist/index.cjs",
+		}),
+		esbuild.build({
+			...baseBuildOptions,
+			format: "esm",
+			outfile: "dist/index.js",
+		}),
+	]);
 	await patch();
 
 	console.log("Build + Patch completed");
@@ -50,44 +52,16 @@ build().catch((err) => {
 });
 
 async function patch() {
-	await new Promise((resolve) => setTimeout(resolve, 50));
-
 	const distDir = path.resolve("dist");
-
-	async function getAllJsFiles(dir) {
-		const entries = await fs.readdir(dir, { withFileTypes: true });
-
-		const files = await Promise.all(
-			entries.map(async (entry) => {
-				const fullPath = path.join(dir, entry.name);
-
-				if (entry.isDirectory()) {
-					return getAllJsFiles(fullPath);
-				}
-
-				if (
-					entry.isFile() &&
-					(fullPath.endsWith(".js") ||
-						fullPath.endsWith(".mjs") ||
-						fullPath.endsWith(".cjs"))
-				) {
-					return [fullPath];
-				}
-
-				return [];
-			})
-		);
-
-		return files.flat();
-	}
-
 	const jsFiles = await getAllJsFiles(distDir);
 	console.log(`Found ${jsFiles.length} JavaScript files`);
 
 	for (const file of jsFiles) {
 		const content = await fs.readFile(file, "utf8");
 
+		PLACEHOLDER_REGEX.lastIndex = 0;
 		if (!PLACEHOLDER_REGEX.test(content)) continue;
+		PLACEHOLDER_REGEX.lastIndex = 0;
 
 		const patched = content.replace(PLACEHOLDER_REGEX, (_match, key) => {
 			switch (key) {
@@ -103,6 +77,26 @@ async function patch() {
 		await fs.writeFile(file, patched, "utf8");
 		console.log(`Patched: ${file}`);
 	}
+}
+
+async function getAllJsFiles(dir) {
+	const entries = await fs.readdir(dir, { withFileTypes: true });
+	const files = await Promise.all(
+		entries.map(async (entry) => {
+			const fullPath = path.join(dir, entry.name);
+			if (entry.isDirectory()) {
+				return getAllJsFiles(fullPath);
+			}
+			if (
+				entry.isFile() &&
+				JS_EXTENSIONS.some((ext) => fullPath.endsWith(ext))
+			) {
+				return [fullPath];
+			}
+			return [];
+		})
+	);
+	return files.flat();
 }
 
 function getVersion() {

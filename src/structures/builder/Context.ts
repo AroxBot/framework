@@ -1,6 +1,6 @@
 import { Message, User, ChatInputCommandInteraction, Locale } from "discord.js";
-import { Client } from "../index.js";
-import { TOptions } from "i18next";
+import type { TOptions } from "i18next";
+import type { Client } from "@structures/index.js";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction

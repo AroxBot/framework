@@ -2,10 +2,11 @@ import { execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 export function exec(command, options = {}) {
+	const { stdio = ["ignore", "pipe", "pipe"], encoding = "utf-8" } = options;
 	return execSync(command, {
 		...options,
-		stdio: ["ignore", "pipe", "pipe"],
-		encoding: "utf-8",
+		stdio,
+		encoding,
 	});
 }
 
