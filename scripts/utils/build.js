@@ -21,9 +21,8 @@ export default async function buildPackage(tempjson) {
 
 	delete tempjson.scripts;
 	delete tempjson.devDependencies;
-	await writeFile(packageJsonPath, JSON.stringify(tempjson));
-
 	try {
+		await writeFile(packageJsonPath, JSON.stringify(tempjson));
 		console.log("Packing npm...");
 		const tarballBuffer = await pack(process.cwd());
 		const tempPath = path.join(tmpdir(), "publish.tgz");

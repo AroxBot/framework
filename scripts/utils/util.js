@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 export function exec(command, options = {}) {
@@ -11,7 +11,9 @@ export function exec(command, options = {}) {
 }
 
 export function generateChangelog(version) {
-	return exec(`git-cliff --tag ${version} --unreleased`).trim();
+	return execFileSync("git-cliff", ["--tag", version, "--unreleased"], {
+		encoding: "utf-8",
+	}).trim();
 }
 
 export function isMain(importMetaUrl) {
