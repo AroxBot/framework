@@ -1,5 +1,5 @@
 import { Events } from "discord.js";
-import { COMMAND_DISABLED_MESSAGE } from "@constants/messages.js";
+import { COMMAND_DISABLED_MESSAGE } from "@constants/lang.js";
 import { EventBuilder, Context } from "@structures/index.js";
 import { deleteMessageAfterSent } from "@utils/index.js";
 

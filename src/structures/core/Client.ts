@@ -23,6 +23,7 @@ import {
 	I18nLoggerAdapter,
 	Logger,
 } from "@utils/index.js";
+import { MAX_EXPORT_FACTORY_DEPTH } from "@constants/exports.js";
 import { CommandBuilder, EventBuilder } from "@structures/index.js";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
@@ -30,7 +31,6 @@ const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	autoRegisterCommands: true,
 	getDefaultLang,
 };
-
 export class Client<
 	Ready extends boolean = boolean,
 > extends DiscordClient<Ready> {
@@ -121,12 +121,16 @@ export class Client<
 		}
 	}
 
-	async registerExport(exported: ModuleExport, source: string) {
+	async registerExport(
+		exported: ModuleExport,
+		source: string,
+		factoryDepth: number = 0
+	) {
 		if (exported == null) return;
 
 		if (Array.isArray(exported)) {
 			for (const item of exported) {
-				await this.registerExport(item, source);
+				await this.registerExport(item, source, factoryDepth);
 			}
 			return;
 		}
@@ -151,8 +155,14 @@ export class Client<
 		}
 
 		if (typeof exported === "function") {
+			if (factoryDepth >= MAX_EXPORT_FACTORY_DEPTH) {
+				this.logger.error(
+					`Skipped export factory in ${source}: max depth (${MAX_EXPORT_FACTORY_DEPTH}) exceeded.`
+				);
+				return;
+			}
 			const maybeBuilt = await (exported as ModuleExportFactory)(this);
-			await this.registerExport(maybeBuilt, source);
+			await this.registerExport(maybeBuilt, source, factoryDepth + 1);
 			return;
 		}
 

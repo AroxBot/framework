@@ -2,7 +2,7 @@ import { Events, MessageFlags } from "discord.js";
 import {
 	COMMAND_DISABLED_MESSAGE,
 	COMMAND_EXECUTE_ERROR_MESSAGE,
-} from "@constants/messages.js";
+} from "@constants/lang.js";
 import { EventBuilder, Context } from "@structures/index.js";
 
 export default new EventBuilder(Events.InteractionCreate, false).onExecute(
