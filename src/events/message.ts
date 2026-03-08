@@ -1,14 +1,16 @@
 import { Events } from "discord.js";
-import { COMMAND_DISABLED_MESSAGE } from "@constants/messages.js";
+import { COMMAND_DISABLED_MESSAGE } from "@constants/lang.js";
 import { EventBuilder, Context } from "@structures/index.js";
 import { deleteMessageAfterSent } from "@utils/index.js";
 
-new EventBuilder(
+export default new EventBuilder(
 	Events.MessageCreate,
 	false,
 	async function (context, message) {
 		if (message.author.bot) return;
-		const prefix = context.client.prefix;
+		const prefix = context.client.prefix(
+			new Context(context.client, { message })
+		);
 		if (
 			typeof prefix !== "string" ||
 			prefix.length === 0 ||
@@ -30,7 +32,7 @@ new EventBuilder(
 		if (!command) {
 			await message
 				.reply({
-					content: ctx.t("error.command.notfound", {
+					content: ctx.t("error:command.notfound", {
 						defaultValue: COMMAND_DISABLED_MESSAGE,
 					}),
 					allowedMentions: { repliedUser: false },
@@ -42,7 +44,7 @@ new EventBuilder(
 		if (!command.supportsPrefix) {
 			await message
 				.reply({
-					content: ctx.t("error.command.disabled", {
+					content: ctx.t("error:command.disabled", {
 						defaultValue: COMMAND_DISABLED_MESSAGE,
 					}),
 					allowedMentions: { repliedUser: false },

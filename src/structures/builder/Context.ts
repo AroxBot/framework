@@ -1,4 +1,4 @@
-import { Message, User, ChatInputCommandInteraction, Locale } from "discord.js";
+import { ChatInputCommandInteraction, Locale, Message, User } from "discord.js";
 import type { TOptions } from "i18next";
 import type { Client } from "@structures/index.js";
 
@@ -6,6 +6,25 @@ type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
 		? { interaction: T; args?: string[] }
 		: { message: T; args?: string[] };
+type TranslateFn = (
+	key: string,
+	options?: TOptions & { defaultValue?: string }
+) => string;
+
+export interface InteractionContextJSON {
+	kind: "interaction";
+	interaction: ChatInputCommandInteraction;
+	author: User | null;
+	t: TranslateFn;
+}
+
+export interface MessageContextJSON {
+	kind: "message";
+	message: Message;
+	args: string[];
+	author: User | null;
+	t: TranslateFn;
+}
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
 	readonly args: string[];
@@ -23,6 +42,10 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		} else {
 			this.data = payload.message as T;
 		}
+
+		this.locale = this.client.options.getDefaultLang?.(
+			this as Context<ChatInputCommandInteraction | Message>
+		) as `${Locale}` | undefined;
 	}
 
 	isInteraction(): this is Context<ChatInputCommandInteraction> {
@@ -50,10 +73,13 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 
 		const locale =
 			this.locale ??
+			this.client.options.getDefaultLang?.(
+				this as Context<ChatInputCommandInteraction | Message>
+			) ??
 			(Array.isArray(this.client.i18n.options.fallbackLng)
 				? this.client.i18n.options.fallbackLng[0]
 				: this.client.i18n.options.fallbackLng) ??
-			"en";
+			Locale.EnglishUS;
 
 		const t = this.client.i18n.getFixedT(locale);
 
@@ -66,15 +92,17 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return result;
 	}
 
-	toJSON() {
+	toJSON(this: Context<ChatInputCommandInteraction>): InteractionContextJSON;
+	toJSON(this: Context<Message>): MessageContextJSON;
+	toJSON(): InteractionContextJSON | MessageContextJSON {
 		const { data, args, author } = this;
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
-				interaction: data,
+				interaction: data as ChatInputCommandInteraction,
 				author,
-				t: this.t.bind(this),
+				t: (key, options) => this.t(key, options),
 			};
 		}
 
@@ -83,7 +111,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			message: data as Message,
 			args,
 			author,
-			t: (this as Context<Message>).t.bind(this),
+			t: (key, options) => this.t(key, options),
 		};
 	}
 }

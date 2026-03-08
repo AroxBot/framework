@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const myinstance = i18next.createInstance({
-	supportedLngs: ["en-US", "tr"],
+	supportedLngs: ["en-US", "tr"], // Required to be `${Locale}` (LocaleString)
 	fallbackLng: "en-US",
 	defaultNS: "translation",
 	ns: ["translation", "test", "error"],
@@ -28,36 +28,17 @@ const client = new arox.Client({
 		IntentsBitField.Flags.GuildMessages,
 		IntentsBitField.Flags.MessageContent,
 	],
-	prefix: { enabled: true, prefix: "a!" },
+	prefix: () => "a!",
+	includePaths: [
+		path.join(__dirname, "events"),
+		path.join(__dirname, "commands"),
+	],
 	logger: {
 		level: arox.LogLevel.Debug,
 	},
 	autoRegisterCommands: false,
 	i18n: myinstance,
 });
-
-arox.setClient(client);
-const command = new arox.CommandBuilder(
-	new arox.ApplicationCommandBuilder()
-		.setName("arox")
-		.setDescription("Arox Test Command")
-		.addAliases("a")
-);
-arox.clearClient();
-
-command
-	.onMessage(function (ctx) {
-		const { message, t, author } = ctx;
-		void message.reply(
-			t("test:hello", { user: author?.username ?? "Unknown" })
-		);
-	})
-	.onInteraction(function (ctx) {
-		const { interaction, t, author } = ctx;
-		void interaction.reply(
-			t("test:hello", { user: author?.username ?? "Unknown" })
-		);
-	});
 
 async function init() {
 	const token = process.env.DISCORD_TOKEN ?? process.env.BOT_TOKEN;

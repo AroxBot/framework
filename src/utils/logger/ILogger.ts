@@ -35,7 +35,7 @@ export enum LogLevel {
 	Fatal = 60,
 
 	/**
-	 * An unknown or uncategorized level.
+	 * An uncategorized level.
 	 */
 	None = 100,
 }
