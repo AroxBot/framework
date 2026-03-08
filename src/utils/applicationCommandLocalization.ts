@@ -48,7 +48,7 @@ const localizeOption = (
 	parentPath: string,
 	instance: i18n
 ) => {
-	let keyPath = parentPath;
+	let keyPath: string;
 	if (option.type === ApplicationCommandOptionType.Subcommand) {
 		keyPath = `${parentPath}.subcommand.${option.name}`;
 	} else if (option.type === ApplicationCommandOptionType.SubcommandGroup) {
