@@ -13,9 +13,12 @@ const peerDependencies = Object.keys(packageJson.peerDependencies ?? {});
 const JS_EXTENSIONS = [".js", ".mjs", ".cjs"];
 
 async function build() {
+	await fs.rm(path.resolve("dist"), { recursive: true, force: true });
+
 	const baseBuildOptions = {
 		entryPoints: ["src/index.ts"],
 		bundle: true,
+		minify: true,
 		platform: "node",
 		target: "node25",
 		sourcemap: false,

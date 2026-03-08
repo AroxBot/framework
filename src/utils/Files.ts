@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import path from "path";
 
 export function getFiles(baseDir: string): string[] {
-	return FastGlob.sync(["**/*.ts", "**/*.js"], {
+	return FastGlob.sync(["**/*.ts", "**/*.js", "**/*.cjs", "**/*.mjs"], {
 		cwd: baseDir,
 		absolute: true,
 		ignore: [

@@ -1,6 +1,5 @@
 import type { ClientEvents } from "discord.js";
 import type { MaybePromise } from "#types/extra.js";
-import { currentClient } from "@context";
 import { Client } from "@structures/index.js";
 import { Logger } from "@utils/index.js";
 
@@ -11,12 +10,23 @@ type EventHandler<K extends keyof ClientEvents> = (
 ) => MaybePromise<void>;
 
 export class EventBuilder<K extends keyof ClientEvents> {
-	readonly client: Client;
-	readonly logger: Logger;
+	#client: Client | null = null;
+	#logger: Logger | null = null;
 	#handler?: EventHandler<K>;
 	#bound = false;
 
+	get client(): Client {
+		if (!this.#client) throw new Error("Event is not attached to a client");
+		return this.#client;
+	}
+
+	get logger(): Logger {
+		if (!this.#logger) throw new Error("Event is not attached to a client");
+		return this.#logger;
+	}
+
 	#listener = async (...args: EventArgs<K>) => {
+		if (!this.#client) return;
 		if (!this.#handler) return;
 		try {
 			await this.#handler(this, ...args);
@@ -33,18 +43,13 @@ export class EventBuilder<K extends keyof ClientEvents> {
 		public readonly once: boolean = false,
 		_handler?: EventHandler<K>
 	) {
-		if (!currentClient) throw new Error("Client is not defined");
-		this.client = currentClient;
-		this.logger = currentClient.logger;
-
 		if (_handler) {
 			this.#handler = _handler;
-			this.#register();
 		}
 	}
 
 	#register(): void {
-		if (this.#bound || !this.#handler) return;
+		if (this.#bound || !this.#handler || !this.#client || !this.#logger) return;
 
 		if (this.once) {
 			this.client.once(this.name as string, this.#listener);
@@ -54,6 +59,14 @@ export class EventBuilder<K extends keyof ClientEvents> {
 
 		this.#bound = true;
 		this.logger.debug(`Loaded Event ${String(this.name)}`);
+	}
+
+	public attach(client: Client) {
+		if (this.#client) return this;
+		this.#client = client;
+		this.#logger = client.logger;
+		this.#register();
+		return this;
 	}
 
 	public onExecute(func: EventHandler<K>) {

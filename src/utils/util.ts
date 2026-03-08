@@ -1,5 +1,47 @@
-import type { PrefixOptions } from "#types/client.js";
-import { InteractionResponse, Message } from "discord.js";
+import {
+	ChatInputCommandInteraction,
+	InteractionResponse,
+	Locale,
+	Message,
+} from "discord.js";
+import type { Context } from "@structures/index.js";
+
+export const allowedLocales = [
+	"id",
+	"en-US",
+	"en-GB",
+	"bg",
+	"zh-CN",
+	"zh-TW",
+	"hr",
+	"cs",
+	"da",
+	"nl",
+	"fi",
+	"fr",
+	"de",
+	"el",
+	"hi",
+	"hu",
+	"it",
+	"ja",
+	"ko",
+	"lt",
+	"no",
+	"pl",
+	"pt-BR",
+	"ro",
+	"ru",
+	"es-ES",
+	"es-419",
+	"sv-SE",
+	"th",
+	"tr",
+	"uk",
+	"vi",
+] as const satisfies readonly `${Locale}`[];
+
+const allowedLocalesSet = new Set<string>(allowedLocales);
 
 export function deleteMessageAfterSent(
 	message: Message | InteractionResponse,
@@ -13,14 +55,26 @@ export function deleteMessageAfterSent(
 	});
 }
 
-export function getPrefix(opts: PrefixOptions): string | false {
-	if (typeof opts === "string") {
-		return opts;
-	}
+export function toAllowedLocale(
+	locale: string | null | undefined
+): `${Locale}` | undefined {
+	if (!locale) return undefined;
+	if (!allowedLocalesSet.has(locale)) return undefined;
+	return locale as `${Locale}`;
+}
 
-	if (opts.enabled && opts.prefix) {
-		return opts.prefix;
+export function getDefaultLang(
+	ctx: Context<ChatInputCommandInteraction | Message>
+): `${Locale}` {
+	if (ctx.isInteraction()) {
+		return (
+			toAllowedLocale(ctx.data.locale) ??
+			toAllowedLocale(ctx.data.guildLocale) ??
+			Locale.EnglishUS
+		);
 	}
-
-	return false;
+	if (ctx.isMessage()) {
+		return toAllowedLocale(ctx.data.guild?.preferredLocale) ?? Locale.EnglishUS;
+	}
+	return Locale.EnglishUS;
 }

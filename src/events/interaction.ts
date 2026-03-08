@@ -5,7 +5,7 @@ import {
 } from "@constants/messages.js";
 import { EventBuilder, Context } from "@structures/index.js";
 
-new EventBuilder(Events.InteractionCreate, false).onExecute(
+export default new EventBuilder(Events.InteractionCreate, false).onExecute(
 	async function (context, interaction) {
 		if (!interaction.isChatInputCommand()) return;
 
@@ -14,7 +14,7 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 
 		if (!command) {
 			await interaction.reply({
-				content: ctx.t("error.command.notfound", {
+				content: ctx.t("error:command.notfound", {
 					defaultValue: COMMAND_DISABLED_MESSAGE,
 				}),
 				flags: MessageFlags.Ephemeral,
@@ -23,7 +23,7 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 		}
 		if (!command.supportsSlash) {
 			await interaction.reply({
-				content: ctx.t("error.command.disabled", {
+				content: ctx.t("error:command.disabled", {
 					defaultValue: COMMAND_DISABLED_MESSAGE,
 				}),
 				flags: MessageFlags.Ephemeral,
@@ -31,7 +31,6 @@ new EventBuilder(Events.InteractionCreate, false).onExecute(
 			return;
 		}
 		try {
-			ctx.locale = interaction.locale;
 			context.logger.debug(
 				`${ctx.author?.tag ?? "Unknown"} used ${command.data.name}(interaction)`
 			);
