@@ -1,0 +1,36 @@
+{
+	"report": {
+		"name": "rapor",
+		"description": "Rapor olusturur",
+		"user": {
+			"member": {
+				"name": "uye",
+				"description": "Dahil edilecek uye"
+			}
+		},
+		"subcommand": {
+			"summary": {
+				"name": "ozet",
+				"description": "Ozet verisini gosterir",
+				"number": {
+					"days": {
+						"name": "gun",
+						"description": "Gun sayisi"
+					}
+				}
+			}
+		},
+		"group": {
+			"admin": {
+				"name": "yonetim",
+				"description": "Yonetim grubu",
+				"subcommand": {
+					"reset": {
+						"name": "sifirla",
+						"description": "Ayarları sıfırlar"
+					}
+				}
+			}
+		}
+	}
+}

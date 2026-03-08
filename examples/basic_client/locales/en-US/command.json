@@ -1,0 +1,36 @@
+{
+	"report": {
+		"name": "report",
+		"description": "Generate a report",
+		"user": {
+			"member": {
+				"name": "member",
+				"description": "Member to include"
+			}
+		},
+		"subcommand": {
+			"summary": {
+				"name": "summary",
+				"description": "Show summary data",
+				"number": {
+					"days": {
+						"name": "days",
+						"description": "Number of days"
+					}
+				}
+			}
+		},
+		"group": {
+			"admin": {
+				"name": "admin",
+				"description": "Admin group",
+				"subcommand": {
+					"reset": {
+						"name": "reset",
+						"description": "Reset settings"
+					}
+				}
+			}
+		}
+	}
+}

@@ -102,6 +102,30 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return result;
 	}
 
+	getDefaultLocalization(key: string, fallback?: string): string {
+		if (!this.client.i18n) return fallback ?? key;
+
+		const resolved = this.client.i18n.t(key, {
+			lng: this.#resolveLocale(),
+			defaultValue: "",
+		});
+		if (
+			typeof resolved === "string" &&
+			resolved.length > 0 &&
+			resolved !== key
+		) {
+			return resolved;
+		}
+
+		const fallbackResolved = this.client.i18n.t(key, {
+			lng: this.#getFallbackLocale(),
+			defaultValue: fallback ?? key,
+		});
+		return typeof fallbackResolved === "string"
+			? fallbackResolved
+			: (fallback ?? key);
+	}
+
 	toJSON(this: Context<ChatInputCommandInteraction>): InteractionContextJSON;
 	toJSON(this: Context<Message>): MessageContextJSON;
 	toJSON(): InteractionContextJSON | MessageContextJSON {

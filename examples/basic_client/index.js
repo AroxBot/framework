@@ -12,7 +12,7 @@ const myinstance = i18next.createInstance({
 	supportedLngs: ["en-US", "tr"], // Required to be `${Locale}` (LocaleString)
 	fallbackLng: "en-US",
 	defaultNS: "translation",
-	ns: ["translation", "test", "error"],
+	ns: ["translation", "test", "error", "command"],
 	backend: {
 		loadPath: path.join(__dirname, "locales/{{lng}}/{{ns}}.json"),
 	},
@@ -23,6 +23,7 @@ const myinstance = i18next.createInstance({
 myinstance.use(backend);
 
 const client = new arox.Client({
+	autoRegisterCommands: true,
 	intents: [
 		IntentsBitField.Flags.Guilds,
 		IntentsBitField.Flags.GuildMessages,
@@ -36,7 +37,6 @@ const client = new arox.Client({
 	logger: {
 		level: arox.LogLevel.Debug,
 	},
-	autoRegisterCommands: false,
 	i18n: myinstance,
 });
 

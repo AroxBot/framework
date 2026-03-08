@@ -5,19 +5,20 @@ const {
 
 module.exports = new Command({
 	data: new ApplicationCommandBuilder()
-		.setName("ping")
-		.setDescription("Replies with pong")
-		.setAliases("p")
-		.setPrefixSupport(true)
-		.setSlashSupport(true),
-	onMessage: (ctx) =>
-		ctx.message.reply(
-			ctx.t("test:hello", {
-				user: ctx.message.author.username,
-			})
+		.autoSet("ban")
+		.addUserOption((opt) => opt.autoSet("target"))
+		.addSubcommand((sub) =>
+			sub.autoSet("extra").addNumberOption((num) => num.autoSet("yup"))
+		)
+		.addSubcommandGroup((group) =>
+			group.autoSet("admin").addSubcommand((sub) => sub.autoSet("reset"))
 		),
 	onInteraction: (ctx) =>
 		ctx.interaction.reply(
 			ctx.t("test:hello", { user: ctx.interaction.user.username })
+		),
+	onMessage: (ctx) =>
+		ctx.message.reply(
+			ctx.t("test:hello", { user: ctx.message.author.username })
 		),
 });
