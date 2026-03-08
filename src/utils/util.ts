@@ -111,6 +111,30 @@ export function parseThings<TContext>(
 	return result;
 }
 
+export function collectTemplateTokens(value: string): Set<string> {
+	const text = String(value);
+	const tokens = new Set<string>();
+	let cursor = 0;
+
+	while (cursor < text.length) {
+		const start = text.indexOf("{{", cursor);
+		if (start === -1) break;
+
+		const end = text.indexOf("}}", start + 2);
+		if (end === -1) break;
+
+		const rawName = text.slice(start + 2, end);
+		const name = rawName.trim();
+		if (name && !rawName.includes("{") && !rawName.includes("}")) {
+			tokens.add(name);
+		}
+
+		cursor = end + 2;
+	}
+
+	return tokens;
+}
+
 export function deleteMessageAfterSent(
 	message: Message | InteractionResponse,
 	time = 15_000

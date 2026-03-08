@@ -252,8 +252,16 @@ export class Client<
 				...localizedNames,
 			])) {
 				const normalized = this.normalizeCommandName(candidateName);
-				if (!lookup.has(normalized)) {
+				const existing = lookup.get(normalized);
+				if (!existing) {
 					lookup.set(normalized, command);
+					continue;
+				}
+				if (existing !== command) {
+					const existingName = existing.data.toJSON().name;
+					this.logger.warn(
+						`Command lookup conflict (${forPrefix ? "prefix" : "slash"}) for "${candidateName}" (normalized: "${normalized}"): "${json.name}" conflicts with "${existingName}". Keeping "${existingName}".`
+					);
 				}
 			}
 		}

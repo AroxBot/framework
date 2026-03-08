@@ -87,7 +87,7 @@ export class MessageCommandParser {
 			this.normalizedArgs[startIndex + 1] ?? "",
 			10
 		);
-		if (Number.isFinite(directValue) && directValue > 0) {
+		if (Number.isFinite(directValue) && directValue >= 0) {
 			return directValue;
 		}
 
@@ -103,12 +103,12 @@ export class MessageCommandParser {
 				(useFuzzy && this.findClosestAlias(token, aliasList, maxDistance))
 			) {
 				const parsed = Number.parseInt(this.normalizedArgs[i + 1] ?? "", 10);
-				if (Number.isFinite(parsed) && parsed > 0) return parsed;
+				if (Number.isFinite(parsed) && parsed >= 0) return parsed;
 			}
 
 			if (valuePart && (aliases.has(keyPart) || nearestKey)) {
 				const parsed = Number.parseInt(valuePart, 10);
-				if (Number.isFinite(parsed) && parsed > 0) return parsed;
+				if (Number.isFinite(parsed) && parsed >= 0) return parsed;
 			}
 		}
 

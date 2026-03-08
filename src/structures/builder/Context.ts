@@ -1,7 +1,11 @@
 import { ChatInputCommandInteraction, Locale, Message, User } from "discord.js";
 import type { TOptions } from "i18next";
 import type { Client } from "@structures/index.js";
-import { parseThings, sanitizeDiscordText } from "@utils/util.js";
+import {
+	collectTemplateTokens,
+	parseThings,
+	sanitizeDiscordText,
+} from "@utils/util.js";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -175,16 +179,26 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		}
 
 		const t = this.client.i18n.getFixedT(this.#resolveLocale());
+		const rawResult = t(key, { ...options, skipInterpolation: true });
+		const rawFallbacked =
+			rawResult === key && options?.defaultValue
+				? options.defaultValue
+				: rawResult;
+		const allowedTokens = collectTemplateTokens(rawFallbacked);
 
 		const result = t(key, options);
-
 		const fallbacked =
 			result === key && options?.defaultValue ? options.defaultValue : result;
+
+		if (allowedTokens.size === 0) return fallbacked;
 
 		return parseThings(
 			fallbacked,
 			this as Context<ChatInputCommandInteraction | Message>,
-			(name, ctx) => ctx.resolveTemplateToken(name)
+			(name, ctx) => {
+				if (!allowedTokens.has(name)) return undefined;
+				return ctx.resolveTemplateToken(name);
+			}
 		);
 	}
 
