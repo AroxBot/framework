@@ -1,5 +1,4 @@
 {
-	"hello": "Merhaba {{user}}",
 	"report_ready": "Rapor komutu hazir, {{user}}.",
 	"report_summary": "{{member}} icin {{days}} gunluk ozet {{user}} tarafindan olusturuldu.",
 	"report_admin_reset": "Rapor ayarlari {{user}} tarafindan sifirlandi.",

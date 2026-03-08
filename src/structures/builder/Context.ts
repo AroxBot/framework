@@ -10,12 +10,14 @@ type TranslateFn = (
 	key: string,
 	options?: TOptions & { defaultValue?: string }
 ) => string;
+type DefaultLocalizationFn = (key: string, fallback?: string) => string;
 
 export interface InteractionContextJSON {
 	kind: "interaction";
 	interaction: ChatInputCommandInteraction;
 	author: User | null;
 	t: TranslateFn;
+	getDefaultLocalization: DefaultLocalizationFn;
 }
 
 export interface MessageContextJSON {
@@ -24,6 +26,7 @@ export interface MessageContextJSON {
 	args: string[];
 	author: User | null;
 	t: TranslateFn;
+	getDefaultLocalization: DefaultLocalizationFn;
 }
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
@@ -67,6 +70,11 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			this.t(key, options);
 	}
 
+	#createDefaultLocalizationResolver() {
+		return (key: string, fallback?: string) =>
+			this.getDefaultLocalization(key, fallback);
+	}
+
 	isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return this.data instanceof ChatInputCommandInteraction;
 	}
@@ -104,18 +112,6 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	getDefaultLocalization(key: string, fallback?: string): string {
 		if (!this.client.i18n) return fallback ?? key;
 
-		const resolved = this.client.i18n.t(key, {
-			lng: this.#resolveLocale(),
-			defaultValue: "",
-		});
-		if (
-			typeof resolved === "string" &&
-			resolved.length > 0 &&
-			resolved !== key
-		) {
-			return resolved;
-		}
-
 		const fallbackResolved = this.client.i18n.t(key, {
 			lng: this.#getFallbackLocale(),
 			defaultValue: fallback ?? key,
@@ -130,6 +126,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	toJSON(): InteractionContextJSON | MessageContextJSON {
 		const { data, args, author } = this;
 		const t = this.#createTranslator();
+		const getDefaultLocalization = this.#createDefaultLocalizationResolver();
 
 		if (this.isInteraction()) {
 			return {
@@ -137,6 +134,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 				interaction: data as ChatInputCommandInteraction,
 				author,
 				t,
+				getDefaultLocalization,
 			};
 		}
 
@@ -146,6 +144,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			args,
 			author,
 			t,
+			getDefaultLocalization,
 		};
 	}
 }

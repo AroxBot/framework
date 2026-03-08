@@ -171,6 +171,83 @@ export class Client<
 		);
 	}
 
+	private normalizeCommandName(name: string): string {
+		return name.trim().toLowerCase();
+	}
+
+	public getSlashCommandsPayload() {
+		return this.commands
+			.filter((cmd) => cmd.supportsSlash)
+			.map((cmd) => cmd.data.toClientJSON(this));
+	}
+
+	public resolveInteractionCommand(commandName: string): CommandBuilder | undefined {
+		const normalizedName = this.normalizeCommandName(commandName);
+
+		const direct = this.commands.get(normalizedName) ?? this.commands.get(commandName);
+		if (direct?.supportsSlash) return direct;
+
+		for (const command of this.commands.values()) {
+			if (!command.supportsSlash) continue;
+
+			const json = command.data.toClientJSON(this);
+			const localizedNames = Object.values(json.name_localizations ?? {}).filter(
+				(name): name is string => typeof name === "string"
+			);
+			const candidateNames = new Set<string>([json.name, ...localizedNames]);
+
+			for (const candidateName of candidateNames) {
+				if (this.normalizeCommandName(candidateName) === normalizedName) {
+					return command;
+				}
+			}
+		}
+
+		return undefined;
+	}
+
+	public resolveMessageCommand(commandName: string): CommandBuilder | undefined {
+		const normalizedName = this.normalizeCommandName(commandName);
+
+		const direct = this.commands.get(normalizedName) ?? this.commands.get(commandName);
+		if (direct?.supportsPrefix) return direct;
+
+		const aliasOwner = this.aliases.findKey((aliases) => {
+			for (const alias of aliases) {
+				if (this.normalizeCommandName(alias) === normalizedName) {
+					return true;
+				}
+			}
+			return false;
+		});
+		if (aliasOwner) {
+			const aliased = this.commands.get(aliasOwner);
+			if (aliased?.supportsPrefix) return aliased;
+		}
+
+		for (const command of this.commands.values()) {
+			if (!command.supportsPrefix) continue;
+
+			const json = command.data.toClientJSON(this);
+			const localizedNames = Object.values(json.name_localizations ?? {}).filter(
+				(name): name is string => typeof name === "string"
+			);
+			const candidateNames = new Set<string>([
+				command.data.toJSON().name,
+				json.name,
+				...localizedNames,
+			]);
+
+			for (const candidateName of candidateNames) {
+				if (this.normalizeCommandName(candidateName) === normalizedName) {
+					return command;
+				}
+			}
+		}
+
+		return undefined;
+	}
+
 	public async registerCommands() {
 		if (!this.token) {
 			this.logger.warn("registerCommands skipped: client token is not set.");
@@ -183,9 +260,7 @@ export class Client<
 			return;
 		}
 
-		const slashCommands = this.commands
-			.filter((cmd) => cmd.supportsSlash)
-			.map((cmd) => cmd.data.toClientJSON(this));
+		const slashCommands = this.getSlashCommandsPayload();
 
 		const rest = new REST({ version: "10" }).setToken(this.token);
 

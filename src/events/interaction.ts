@@ -9,7 +9,9 @@ export default new EventBuilder(Events.InteractionCreate, false).onExecute(
 	async function (context, interaction) {
 		if (!interaction.isChatInputCommand()) return;
 
-		const command = context.client.commands.get(interaction.commandName);
+		const command = context.client.resolveInteractionCommand(
+			interaction.commandName
+		);
 		const ctx = new Context(context.client, { interaction });
 
 		if (!command) {
