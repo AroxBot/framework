@@ -181,19 +181,22 @@ export class Client<
 			.map((cmd) => cmd.data.toClientJSON(this));
 	}
 
-	public resolveInteractionCommand(commandName: string): CommandBuilder | undefined {
+	public resolveInteractionCommand(
+		commandName: string
+	): CommandBuilder | undefined {
 		const normalizedName = this.normalizeCommandName(commandName);
 
-		const direct = this.commands.get(normalizedName) ?? this.commands.get(commandName);
+		const direct =
+			this.commands.get(normalizedName) ?? this.commands.get(commandName);
 		if (direct?.supportsSlash) return direct;
 
 		for (const command of this.commands.values()) {
 			if (!command.supportsSlash) continue;
 
 			const json = command.data.toClientJSON(this);
-			const localizedNames = Object.values(json.name_localizations ?? {}).filter(
-				(name): name is string => typeof name === "string"
-			);
+			const localizedNames = Object.values(
+				json.name_localizations ?? {}
+			).filter((name): name is string => typeof name === "string");
 			const candidateNames = new Set<string>([json.name, ...localizedNames]);
 
 			for (const candidateName of candidateNames) {
@@ -206,10 +209,13 @@ export class Client<
 		return undefined;
 	}
 
-	public resolveMessageCommand(commandName: string): CommandBuilder | undefined {
+	public resolveMessageCommand(
+		commandName: string
+	): CommandBuilder | undefined {
 		const normalizedName = this.normalizeCommandName(commandName);
 
-		const direct = this.commands.get(normalizedName) ?? this.commands.get(commandName);
+		const direct =
+			this.commands.get(normalizedName) ?? this.commands.get(commandName);
 		if (direct?.supportsPrefix) return direct;
 
 		const aliasOwner = this.aliases.findKey((aliases) => {
@@ -229,9 +235,9 @@ export class Client<
 			if (!command.supportsPrefix) continue;
 
 			const json = command.data.toClientJSON(this);
-			const localizedNames = Object.values(json.name_localizations ?? {}).filter(
-				(name): name is string => typeof name === "string"
-			);
+			const localizedNames = Object.values(
+				json.name_localizations ?? {}
+			).filter((name): name is string => typeof name === "string");
 			const candidateNames = new Set<string>([
 				command.data.toJSON().name,
 				json.name,
