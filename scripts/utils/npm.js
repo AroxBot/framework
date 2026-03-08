@@ -18,3 +18,17 @@ export function checkVersionExists(packageName, version, registry) {
 		return false;
 	}
 }
+
+export function publishTarball(tarballPath, registry, version, options = {}) {
+	const { provenance = false } = options;
+	const distTag = getNpmDistTag(version);
+	const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
+	const provenanceArg = provenance ? " --provenance" : "";
+
+	exec(
+		`npm publish "${tarballPath}"${provenanceArg} --registry=${registry}${tagArg}`,
+		{
+			stdio: "inherit",
+		}
+	);
+}
