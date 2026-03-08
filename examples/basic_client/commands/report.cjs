@@ -4,7 +4,6 @@ const {
 	MessageCommandParser,
 	sanitizeDiscordText,
 } = require("../../../dist/index.cjs");
-const adminOnly = require("../preconditions/adminOnly.cjs");
 
 const safeReply = (content) => ({
 	content,

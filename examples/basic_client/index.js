@@ -43,6 +43,6 @@ const client = new arox.Client({
 
 async function init() {
 	const token = process.env.DISCORD_TOKEN ?? process.env.BOT_TOKEN;
-	await client.login(token)
+	await client.login(token);
 }
 void init();
