@@ -1,4 +1,4 @@
-import { ClientEvents } from "discord.js";
+import type { ClientEvents } from "discord.js";
 import type { MaybePromise } from "#types/extra.js";
 import { currentClient } from "@context";
 import { Client } from "@structures/index.js";
