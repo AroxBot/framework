@@ -9,19 +9,12 @@ const adminOnly = {
 		const member =
 			ctx.kind === "interaction" ? ctx.interaction.member : ctx.message.member;
 
-		if (!member) return false;
+		if (!member?.permissions) {
+			return false;
+		}
 
-		const permissions =
-			typeof member.permissions === "string"
-				? BigInt(member.permissions)
-				: member.permissions?.bitfield;
-
-		if (!permissions) return false;
-
-		return (
-			(BigInt(permissions) & PermissionFlagsBits.Administrator) ===
-			PermissionFlagsBits.Administrator
-		);
+		const permissions = new PermissionsBitField(member.permissions);
+		return permissions.has(PermissionFlagsBits.Administrator);
 	},
 };
 

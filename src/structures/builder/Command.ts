@@ -72,9 +72,7 @@ export class CommandBuilder {
 	}
 
 	addPreconditions(...preconditions: IPrecondition[]) {
-		for (const precondition of preconditions) {
-			this.preconditions.push(new Precondition(precondition));
-		}
+		this.preconditions.push(...preconditions.map((p) => new Precondition(p)));
 		return this;
 	}
 

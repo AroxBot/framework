@@ -57,7 +57,7 @@ export default new EventBuilder(
 				await message
 					.reply({
 						content: failedPrecondition.errorMessage,
-						allowedMentions: { repliedUser: false },
+						allowedMentions: { parse: [], repliedUser: false },
 					})
 					.then(deleteMessageAfterSent);
 				return;
