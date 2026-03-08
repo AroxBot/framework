@@ -24,8 +24,13 @@ export class CommandBuilder {
 		primary: ((ctx: T) => MaybePromise<void>) | undefined,
 		fallback: ((ctx: CommandContext) => MaybePromise<void>) | undefined
 	) {
-		if (!primary && !fallback) return undefined;
-		return (ctx: T) => primary?.(ctx) ?? fallback?.(ctx);
+		if (primary) {
+			return (ctx: T) => primary(ctx);
+		}
+		if (fallback) {
+			return (ctx: T) => fallback(ctx);
+		}
+		return undefined;
 	}
 
 	get client(): Client {

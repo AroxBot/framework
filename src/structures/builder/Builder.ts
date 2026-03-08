@@ -1,4 +1,5 @@
 import {
+	ApplicationCommandOptionType,
 	SlashCommandAttachmentOption,
 	SlashCommandBooleanOption,
 	SlashCommandBuilder,
@@ -11,6 +12,7 @@ import {
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 	SlashCommandUserOption,
+	type APIApplicationCommandOption,
 	type RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from "discord.js";
 import { Client } from "@structures/core/index.js";
@@ -344,7 +346,9 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 	}
 
 	override toJSON(): ApplicationJSONBody {
-		return super.toJSON() as ApplicationJSONBody;
+		const json = super.toJSON() as ApplicationJSONBody;
+		this.assertNoMixedTopLevelOptionTypes(json);
+		return json;
 	}
 
 	toClientJSON(
@@ -353,5 +357,28 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		const json = this.toJSON();
 		if (!_client.i18n) return json;
 		return localizeApplicationCommand(json, _client.i18n);
+	}
+
+	private assertNoMixedTopLevelOptionTypes(json: ApplicationJSONBody) {
+		const options = json.options as APIApplicationCommandOption[] | undefined;
+		if (!options || options.length === 0) return;
+
+		const hasSubcommands = options.some(
+			(option) =>
+				option.type === ApplicationCommandOptionType.Subcommand ||
+				option.type === ApplicationCommandOptionType.SubcommandGroup
+		);
+		if (!hasSubcommands) return;
+
+		const hasRegularOptions = options.some(
+			(option) =>
+				option.type !== ApplicationCommandOptionType.Subcommand &&
+				option.type !== ApplicationCommandOptionType.SubcommandGroup
+		);
+		if (!hasRegularOptions) return;
+
+		throw new Error(
+			`Command "${json.name}" mixes subcommands/subcommand groups with regular options at the top level. Discord requires choosing one structure.`
+		);
 	}
 }

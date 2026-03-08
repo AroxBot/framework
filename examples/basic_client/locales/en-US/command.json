@@ -2,16 +2,16 @@
 	"report": {
 		"name": "report",
 		"description": "Generate a report",
-		"user": {
-			"member": {
-				"name": "member",
-				"description": "Member to include"
-			}
-		},
 		"subcommand": {
 			"summary": {
 				"name": "summary",
 				"description": "Show summary data",
+				"user": {
+					"member": {
+						"name": "member",
+						"description": "Member to include"
+					}
+				},
 				"number": {
 					"days": {
 						"name": "days",

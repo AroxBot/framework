@@ -2,16 +2,16 @@
 	"report": {
 		"name": "rapor",
 		"description": "Rapor olusturur",
-		"user": {
-			"member": {
-				"name": "uye",
-				"description": "Dahil edilecek uye"
-			}
-		},
 		"subcommand": {
 			"summary": {
 				"name": "ozet",
 				"description": "Ozet verisini gosterir",
+				"user": {
+					"member": {
+						"name": "uye",
+						"description": "Dahil edilecek uye"
+					}
+				},
 				"number": {
 					"days": {
 						"name": "gun",

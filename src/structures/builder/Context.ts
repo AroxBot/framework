@@ -49,9 +49,8 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	}
 
 	#getFallbackLocale(): `${Locale}` {
-		return ((Array.isArray(this.client.i18n?.options.fallbackLng)
-			? this.client.i18n.options.fallbackLng[0]
-			: this.client.i18n?.options.fallbackLng) ??
+		const fallbackLng = this.client.i18n!.options.fallbackLng;
+		return ((Array.isArray(fallbackLng) ? fallbackLng[0] : fallbackLng) ??
 			Locale.EnglishUS) as `${Locale}`;
 	}
 

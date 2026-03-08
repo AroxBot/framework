@@ -6,9 +6,11 @@ const {
 module.exports = new Command({
 	data: new ApplicationCommandBuilder()
 		.autoSet("report")
-		.addUserOption((opt) => opt.autoSet("member"))
 		.addSubcommand((sub) =>
-			sub.autoSet("summary").addNumberOption((num) => num.autoSet("days"))
+			sub
+				.autoSet("summary")
+				.addUserOption((opt) => opt.autoSet("member"))
+				.addNumberOption((num) => num.autoSet("days"))
 		)
 		.addSubcommandGroup((group) =>
 			group.autoSet("admin").addSubcommand((sub) => sub.autoSet("reset"))
@@ -16,11 +18,6 @@ module.exports = new Command({
 	onInteraction: (ctx) => {
 		const group = ctx.interaction.options.getSubcommandGroup(false);
 		const subcommand = ctx.interaction.options.getSubcommand(false);
-		const memberOption = ctx.getDefaultLocalization(
-			"command:report.user.member.name",
-			"member"
-		);
-		const member = ctx.interaction.options.getUser(memberOption, false);
 
 		if (group === "admin" && subcommand === "reset") {
 			return ctx.interaction.reply(
@@ -31,6 +28,11 @@ module.exports = new Command({
 		}
 
 		if (subcommand === "summary") {
+			const memberOption = ctx.getDefaultLocalization(
+				"command:report.subcommand.summary.user.member.name",
+				"member"
+			);
+			const member = ctx.interaction.options.getUser(memberOption, false);
 			const days = ctx.interaction.options.getNumber("days", false) ?? 7;
 			return ctx.interaction.reply(
 				ctx.t("test:report_summary", {
