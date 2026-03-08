@@ -51,6 +51,7 @@
 		"@sapphire/timestamp": "^1.0.5",
 		"colorette": "^2.0.20",
 		"fast-glob": "^3.3.3",
+		"fastest-levenshtein": "^1.0.16",
 		"i18next": "^25.8.0"
 	},
 	"devDependencies": {

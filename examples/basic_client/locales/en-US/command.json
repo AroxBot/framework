@@ -1,20 +1,24 @@
 {
 	"report": {
 		"name": "report",
+		"alias": ["report"],
 		"description": "Generate a report",
 		"subcommand": {
 			"summary": {
 				"name": "summary",
+				"alias": ["summary", "sum"],
 				"description": "Show summary data",
 				"user": {
 					"member": {
 						"name": "member",
+						"alias": ["member", "user"],
 						"description": "Member to include"
 					}
 				},
 				"number": {
 					"days": {
 						"name": "days",
+						"alias": ["days", "day"],
 						"description": "Number of days"
 					}
 				}
@@ -23,10 +27,12 @@
 		"group": {
 			"admin": {
 				"name": "admin",
+				"alias": ["admin"],
 				"description": "Admin group",
 				"subcommand": {
 					"reset": {
 						"name": "reset",
+						"alias": ["reset"],
 						"description": "Reset settings"
 					}
 				}

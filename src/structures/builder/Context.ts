@@ -11,6 +11,10 @@ type TranslateFn = (
 	options?: TOptions & { defaultValue?: string }
 ) => string;
 type DefaultLocalizationFn = (key: string, fallback?: string) => string;
+type LocalizationAliasesFn = (
+	key: string,
+	fallback?: string | string[]
+) => string[];
 
 export interface InteractionContextJSON {
 	kind: "interaction";
@@ -18,6 +22,7 @@ export interface InteractionContextJSON {
 	author: User | null;
 	t: TranslateFn;
 	getDefaultLocalization: DefaultLocalizationFn;
+	getLocalizationAliases: LocalizationAliasesFn;
 }
 
 export interface MessageContextJSON {
@@ -27,6 +32,7 @@ export interface MessageContextJSON {
 	author: User | null;
 	t: TranslateFn;
 	getDefaultLocalization: DefaultLocalizationFn;
+	getLocalizationAliases: LocalizationAliasesFn;
 }
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
@@ -75,6 +81,28 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			this.getDefaultLocalization(key, fallback);
 	}
 
+	#createLocalizationAliasesResolver() {
+		return (key: string, fallback?: string | string[]) =>
+			this.getLocalizationAliases(key, fallback);
+	}
+
+	#toAliasList(value: unknown): string[] {
+		if (Array.isArray(value)) {
+			return value
+				.flatMap((item) => this.#toAliasList(item))
+				.filter((item) => item.length > 0);
+		}
+
+		if (typeof value === "string") {
+			return value
+				.split(/[,\n|]/g)
+				.map((item) => item.trim())
+				.filter((item) => item.length > 0);
+		}
+
+		return [];
+	}
+
 	isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return this.data instanceof ChatInputCommandInteraction;
 	}
@@ -121,21 +149,53 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			: (fallback ?? key);
 	}
 
+	getLocalizationAliases(
+		key: string,
+		fallback?: string | string[]
+	): string[] {
+		const fallbackList = this.#toAliasList(fallback ?? []);
+		if (!this.client.i18n) return fallbackList;
+
+		const locales = Array.from(
+			new Set([this.#resolveLocale(), this.#getFallbackLocale()])
+		);
+		const aliases = new Set<string>();
+
+		for (const locale of locales) {
+			const value = this.client.i18n.t(key, {
+				lng: locale,
+				defaultValue: "",
+				returnObjects: true,
+			});
+			for (const alias of this.#toAliasList(value)) {
+				if (alias !== key) aliases.add(alias);
+			}
+		}
+
+		if (aliases.size === 0) {
+			for (const alias of fallbackList) aliases.add(alias);
+		}
+
+		return Array.from(aliases);
+	}
+
 	toJSON(this: Context<ChatInputCommandInteraction>): InteractionContextJSON;
 	toJSON(this: Context<Message>): MessageContextJSON;
 	toJSON(): InteractionContextJSON | MessageContextJSON {
 		const { data, args, author } = this;
 		const t = this.#createTranslator();
 		const getDefaultLocalization = this.#createDefaultLocalizationResolver();
+		const getLocalizationAliases = this.#createLocalizationAliasesResolver();
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
 				interaction: data as ChatInputCommandInteraction,
-				author,
-				t,
-				getDefaultLocalization,
-			};
+					author,
+					t,
+					getDefaultLocalization,
+					getLocalizationAliases,
+				};
 		}
 
 		return {
@@ -145,6 +205,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			author,
 			t,
 			getDefaultLocalization,
+			getLocalizationAliases,
 		};
 	}
 }
