@@ -42,7 +42,6 @@ export const allowedLocales = [
 ] as const satisfies readonly `${Locale}`[];
 
 const allowedLocalesSet = new Set<string>(allowedLocales);
-const templateTokenRegex = /{{\s*([^{}]+?)\s*}}/g;
 
 export function sanitizeDiscordText(value: unknown): string {
 	if (value == null) return "";
@@ -76,10 +75,40 @@ export function parseThings<TContext>(
 	ctx: TContext,
 	resolver: (name: string, ctx: TContext) => string | undefined
 ): string {
-	return String(value).replace(templateTokenRegex, (full, name: string) => {
-		const resolved = resolver(name.trim(), ctx);
-		return typeof resolved === "string" ? resolved : full;
-	});
+	const text = String(value);
+	let cursor = 0;
+	let result = "";
+
+	while (cursor < text.length) {
+		const start = text.indexOf("{{", cursor);
+		if (start === -1) {
+			result += text.slice(cursor);
+			break;
+		}
+
+		result += text.slice(cursor, start);
+
+		const end = text.indexOf("}}", start + 2);
+		if (end === -1) {
+			result += text.slice(start);
+			break;
+		}
+
+		const fullToken = text.slice(start, end + 2);
+		const rawName = text.slice(start + 2, end);
+		const name = rawName.trim();
+
+		if (!name || rawName.includes("{") || rawName.includes("}")) {
+			result += fullToken;
+		} else {
+			const resolved = resolver(name, ctx);
+			result += typeof resolved === "string" ? resolved : fullToken;
+		}
+
+		cursor = end + 2;
+	}
+
+	return result;
 }
 
 export function deleteMessageAfterSent(
