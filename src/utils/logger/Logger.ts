@@ -12,6 +12,7 @@ import type {
 	LoggerOptions,
 	LoggerStyleOptions,
 	LoggerStyleResolvable,
+	LoggerValues,
 	LoggerTimestampFormatter,
 	LoggerTimestampOptions,
 } from "#types/logger.js";
@@ -24,6 +25,7 @@ export type {
 	LoggerOptions,
 	LoggerStyleOptions,
 	LoggerStyleResolvable,
+	LoggerValues,
 	LoggerTimestampFormatter,
 	LoggerTimestampOptions,
 } from "#types/logger.js";
@@ -100,35 +102,35 @@ export class Logger implements ILogger {
 		return level >= this.level;
 	}
 
-	trace(...values: readonly unknown[]): void {
+	trace(...values: LoggerValues): void {
 		this.write(LogLevel.Trace, ...values);
 	}
 
-	debug(...values: readonly unknown[]): void {
+	debug(...values: LoggerValues): void {
 		this.write(LogLevel.Debug, ...values);
 	}
 
-	info(...values: readonly unknown[]): void {
+	info(...values: LoggerValues): void {
 		this.write(LogLevel.Info, ...values);
 	}
 
-	log(...values: readonly unknown[]): void {
+	log(...values: LoggerValues): void {
 		this.write(LogLevel.Info, ...values);
 	}
 
-	warn(...values: readonly unknown[]): void {
+	warn(...values: LoggerValues): void {
 		this.write(LogLevel.Warn, ...values);
 	}
 
-	error(...values: readonly unknown[]): void {
+	error(...values: LoggerValues): void {
 		this.write(LogLevel.Error, ...values);
 	}
 
-	fatal(...values: readonly unknown[]): void {
+	fatal(...values: LoggerValues): void {
 		this.write(LogLevel.Fatal, ...values);
 	}
 
-	write(level: LogLevel, ...values: readonly unknown[]): void {
+	write(level: LogLevel, ...values: LoggerValues): void {
 		if (level < this.level) return;
 
 		const method = Logger.LOG_METHODS.get(level);
@@ -157,7 +159,7 @@ export class Logger implements ILogger {
 		}
 	}
 
-	protected preprocess(values: readonly unknown[]): string {
+	protected preprocess(values: LoggerValues): string {
 		const inspectOptions: InspectOptions = {
 			colors: colorette.isColorSupported,
 			depth: this.depth,
@@ -369,15 +371,15 @@ export enum LoggerStyleBackground {
 export class I18nLoggerAdapter implements LoggerModule {
 	public readonly type = "logger";
 	constructor(private readonly logger: Logger) {}
-	log(...args: unknown[]): void {
+	log(...args: Parameters<LoggerModule["log"]>): void {
 		this.logger.debug("[i18next]", ...args);
 	}
 
-	warn(...args: unknown[]): void {
+	warn(...args: Parameters<LoggerModule["warn"]>): void {
 		this.logger.warn("[i18next]", ...args);
 	}
 
-	error(...args: unknown[]): void {
+	error(...args: Parameters<LoggerModule["error"]>): void {
 		this.logger.error("[i18next]", ...args);
 	}
 }

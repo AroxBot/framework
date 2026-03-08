@@ -9,20 +9,26 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { i18n } from "i18next";
-import type { FrameworkOptions } from "#types/client.js";
-import { clearClient, setClient } from "@context";
+import type {
+	AttachableExport,
+	FrameworkOptions,
+	ModuleExport,
+	ModuleExportFactory,
+	PrefixFn,
+} from "#types/client.js";
 import {
+	getDefaultLang,
 	getFiles,
 	getProjectRoot,
-	getPrefix,
 	I18nLoggerAdapter,
 	Logger,
 } from "@utils/index.js";
-import { CommandBuilder } from "@structures/index.js";
+import { CommandBuilder, EventBuilder } from "@structures/index.js";
 
 const defaultOpts: Omit<FrameworkOptions, "intents"> = {
 	includePaths: ["events", "commands"],
 	autoRegisterCommands: true,
+	getDefaultLang,
 };
 
 export class Client<
@@ -31,7 +37,7 @@ export class Client<
 	readonly logger: Logger;
 	commands: Collection<string, CommandBuilder>;
 	aliases: Collection<string, Set<string>>;
-	readonly prefix: string | false;
+	readonly prefix: PrefixFn;
 	i18n: i18n | undefined;
 
 	declare options: Omit<FrameworkOptions, "intents"> & {
@@ -43,7 +49,7 @@ export class Client<
 		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
 		this.aliases = new Collection();
-		this.prefix = getPrefix(this.options.prefix ?? { enabled: false });
+		this.prefix = this.options.prefix ?? (() => false);
 		if (this.options.i18n) {
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
@@ -53,7 +59,10 @@ export class Client<
 		await this.#loadCoreEvents();
 		for (const includePath of this.options.includePaths) {
 			try {
-				await this.#loadDir(path.join(getProjectRoot(), includePath));
+				const resolvedDir = path.isAbsolute(includePath)
+					? includePath
+					: path.join(getProjectRoot(), includePath);
+				await this.#loadDir(resolvedDir);
 			} catch (error) {
 				this.logger.error(`Error loading ${includePath}:`, error);
 			}
@@ -76,34 +85,81 @@ export class Client<
 	}
 
 	async #loadCoreEvents() {
-		setClient(this);
-		try {
-			const coreEventLoaders = [
-				() => import("../../events/ready.js"),
-				() => import("../../events/interaction.js"),
-			] as const;
-			for (const load of coreEventLoaders) {
-				await load();
-			}
-			if (this.prefix) {
-				await import("../../events/message.js");
-			}
-		} finally {
-			clearClient();
+		const coreEventLoaders = [
+			() => import("../../events/ready.js"),
+			() => import("../../events/interaction.js"),
+		] as const;
+		for (const load of coreEventLoaders) {
+			const mod = await load();
+			await this.#registerModuleExports(mod, "[core]");
+		}
+		if (this.options.prefix) {
+			const mod = await import("../../events/message.js");
+			await this.#registerModuleExports(mod, "[core]");
 		}
 	}
 
 	async #loadFile(file: string) {
 		try {
-			setClient(this);
 			const resolvedFileUrl = pathToFileURL(file);
 			resolvedFileUrl.searchParams.set("ts", Date.now().toString(36));
-			await import(resolvedFileUrl.href);
+			const mod = await import(resolvedFileUrl.href);
+			await this.#registerModuleExports(mod, file);
 		} catch (error) {
 			this.logger.error(`Error loading file ${file}:`, error);
-		} finally {
-			clearClient();
 		}
+	}
+
+	async #registerModuleExports<T extends object>(mod: T, source: string) {
+		const unique = new Set<ModuleExport>();
+		for (const value of Object.values(mod) as ModuleExport[]) {
+			unique.add(value);
+		}
+
+		for (const value of unique) {
+			await this.registerExport(value, source);
+		}
+	}
+
+	async registerExport(exported: ModuleExport, source: string) {
+		if (exported == null) return;
+
+		if (Array.isArray(exported)) {
+			for (const item of exported) {
+				await this.registerExport(item, source);
+			}
+			return;
+		}
+
+		if (exported instanceof CommandBuilder) {
+			exported.attach(this);
+			return;
+		}
+
+		if (exported instanceof EventBuilder) {
+			exported.attach(this);
+			return;
+		}
+
+		if (
+			typeof exported === "object" &&
+			exported !== null &&
+			"attach" in exported &&
+			typeof (exported as Partial<AttachableExport>).attach === "function"
+		) {
+			await (exported as AttachableExport).attach(this);
+			return;
+		}
+
+		if (typeof exported === "function") {
+			const maybeBuilt = await (exported as ModuleExportFactory)(this);
+			await this.registerExport(maybeBuilt, source);
+			return;
+		}
+
+		this.logger.debug(
+			`Skipped unsupported export type in ${source}: ${typeof exported}`
+		);
 	}
 
 	public async registerCommands() {

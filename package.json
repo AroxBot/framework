@@ -1,6 +1,6 @@
 {
 	"name": "framework",
-	"version": "0.1.2-beta.1",
+	"version": "0.1.2-beta.2",
 	"description": "",
 	"keywords": [
 		"arox",
@@ -24,11 +24,20 @@
 	"main": "dist/index.cjs",
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"imports": {
+		"#types/*": "./types/*.d.ts"
+	},
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"require": "./dist/index.cjs",
-			"import": "./dist/index.js",
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			},
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
 			"default": "./dist/index.js"
 		}
 	},
@@ -38,7 +47,7 @@
 		"check": "oxfmt --check && oxlint --type-aware --type-check",
 		"format": "oxfmt",
 		"build:js": "node ./scripts/build.js",
-		"build:dts": "tsc --emitDeclarationOnly",
+		"build:dts": "tsc --emitDeclarationOnly && tsc-alias -p tsconfig.json && node ./scripts/createCjsTypes.js",
 		"build": "npm run build:js && npm run build:dts"
 	},
 	"dependencies": {
@@ -55,6 +64,7 @@
 		"oxfmt": "^0.36.0",
 		"oxlint": "^1.39.0",
 		"oxlint-tsgolint": "^0.16.0",
+		"tsc-alias": "^1.8.16",
 		"typescript": "~5",
 		"unplugin-oxc": "^0.5.7"
 	},

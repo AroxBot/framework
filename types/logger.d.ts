@@ -1,4 +1,5 @@
 import type { Color } from "colorette";
+import type { Console } from "node:console";
 import type { LogLevel } from "../src/utils/logger/ILogger.js";
 import type {
 	LoggerStyleBackground,
@@ -8,13 +9,13 @@ import type {
 
 export interface ILogger {
 	has(level: LogLevel): boolean;
-	trace(...values: readonly unknown[]): void;
-	debug(...values: readonly unknown[]): void;
-	info(...values: readonly unknown[]): void;
-	warn(...values: readonly unknown[]): void;
-	error(...values: readonly unknown[]): void;
-	fatal(...values: readonly unknown[]): void;
-	write(level: LogLevel, ...values: readonly unknown[]): void;
+	trace(...values: LoggerValues): void;
+	debug(...values: LoggerValues): void;
+	info(...values: LoggerValues): void;
+	warn(...values: LoggerValues): void;
+	error(...values: LoggerValues): void;
+	fatal(...values: LoggerValues): void;
+	write(level: LogLevel, ...values: LoggerValues): void;
 }
 
 export interface LoggerOptions {
@@ -59,5 +60,7 @@ export interface LoggerStyleOptions {
 	text?: LoggerStyleText;
 	background?: LoggerStyleBackground;
 }
+
+export type LoggerValues = Parameters<Console["log"]>;
 
 export type LoggerStyleResolvable = Color | LoggerStyleOptions;
