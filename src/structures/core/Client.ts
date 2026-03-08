@@ -143,7 +143,6 @@ export class Client<
 
 		if (
 			typeof exported === "object" &&
-			exported !== null &&
 			"attach" in exported &&
 			typeof (exported as Partial<AttachableExport>).attach === "function"
 		) {
