@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, Locale, Message, User } from "discord.js";
 import type { TOptions } from "i18next";
 import type { Client } from "@structures/index.js";
+import { parseThings, sanitizeDiscordText } from "@utils/util.js";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -121,6 +122,43 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
+	private resolveIdentityToken(
+		identity: Pick<User, "id" | "username"> | null | undefined,
+		tokenPath: string
+	): string | undefined {
+		if (!identity) return undefined;
+
+		if (tokenPath === "" || tokenPath === "name" || tokenPath === "username") {
+			return sanitizeDiscordText(identity.username);
+		}
+		if (tokenPath === "id") {
+			return identity.id;
+		}
+		if (tokenPath === "ping" || tokenPath === "mention") {
+			return `<@${identity.id}>`;
+		}
+
+		return undefined;
+	}
+
+	private resolveContextToken(name: string): string | undefined {
+		const [targetRaw, ...rest] = name.toLowerCase().split(".");
+		const tokenPath = rest.join(".");
+		const target = targetRaw.trim();
+
+		if (target === "user" || target === "author") {
+			return this.resolveIdentityToken(this.author, tokenPath);
+		}
+		if (target === "bot") {
+			if (tokenPath === "ws.ping") {
+				return `${this.client.ws.ping}`;
+			}
+			return this.resolveIdentityToken(this.client.user, tokenPath);
+		}
+
+		return undefined;
+	}
+
 	t(key: string, options?: TOptions & { defaultValue?: string }): string {
 		if (!this.client.i18n) {
 			throw new Error("i18n is not initialized");
@@ -130,11 +168,14 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 
 		const result = t(key, options);
 
-		if (result === key && options?.defaultValue) {
-			return options.defaultValue;
-		}
+		const fallbacked =
+			result === key && options?.defaultValue ? options.defaultValue : result;
 
-		return result;
+		return parseThings(
+			fallbacked,
+			this as Context<ChatInputCommandInteraction | Message>,
+			(name, ctx) => ctx.resolveContextToken(name)
+		);
 	}
 
 	getDefaultLocalization(key: string, fallback?: string): string {

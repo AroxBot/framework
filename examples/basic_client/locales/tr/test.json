@@ -1,6 +1,6 @@
 {
-	"report_ready": "Rapor komutu hazir, {{user}}.",
-	"report_summary": "{{member}} icin {{days}} gunluk ozet {{user}} tarafindan olusturuldu.",
-	"report_admin_reset": "Rapor ayarlari {{user}} tarafindan sifirlandi.",
-	"report_prefix": "Detay icin /report summary days:<sayi> kullan, {{user}}."
+	"report_ready": "Rapor komutu hazir, {{user.name}}.",
+	"report_summary": "{{member}} icin {{days}} gunluk ozet {{user.name}} tarafindan olusturuldu.",
+	"report_admin_reset": "Rapor ayarlari {{author.name}} tarafindan sifirlandi.",
+	"report_prefix": "Detay icin /report summary days:<sayi> kullan, {{user.name}}."
 }

@@ -2,10 +2,9 @@ const {
 	Command,
 	ApplicationCommandBuilder,
 	MessageCommandParser,
+	sanitizeDiscordText,
 } = require("../../../dist/index.cjs");
 
-const sanitizeDiscordText = (value) =>
-	String(value ?? "").replaceAll("@", "@\u200b");
 const safeReply = (content) => ({
 	content,
 	allowedMentions: { parse: [] },
@@ -28,13 +27,7 @@ module.exports = new Command({
 		const subcommand = ctx.interaction.options.getSubcommand(false);
 
 		if (group === "admin" && subcommand === "reset") {
-			return ctx.interaction.reply(
-				safeReply(
-					ctx.t("test:report_admin_reset", {
-						user: sanitizeDiscordText(ctx.interaction.user.username),
-					})
-				)
-			);
+			return ctx.interaction.reply(safeReply(ctx.t("test:report_admin_reset")));
 		}
 
 		if (subcommand === "summary") {
@@ -43,7 +36,6 @@ module.exports = new Command({
 			return ctx.interaction.reply(
 				safeReply(
 					ctx.t("test:report_summary", {
-						user: sanitizeDiscordText(ctx.interaction.user.username),
 						member: sanitizeDiscordText(
 							member?.username ?? ctx.interaction.user.username
 						),
@@ -53,25 +45,13 @@ module.exports = new Command({
 			);
 		}
 
-		return ctx.interaction.reply(
-			safeReply(
-				ctx.t("test:report_ready", {
-					user: sanitizeDiscordText(ctx.interaction.user.username),
-				})
-			)
-		);
+		return ctx.interaction.reply(safeReply(ctx.t("test:report_ready")));
 	},
 	onMessage: (ctx) => {
 		const parser = new MessageCommandParser(ctx);
 		const first = ctx.args[0];
 		if (!first) {
-			return ctx.message.reply(
-				safeReply(
-					ctx.t("test:report_prefix", {
-						user: sanitizeDiscordText(ctx.message.author.username),
-					})
-				)
-			);
+			return ctx.message.reply(safeReply(ctx.t("test:report_prefix")));
 		}
 
 		const summaryMatch = parser.matchesArg(
@@ -106,7 +86,6 @@ module.exports = new Command({
 			return ctx.message.reply(
 				safeReply(
 					ctx.t("test:report_summary", {
-						user: sanitizeDiscordText(ctx.message.author.username),
 						member: sanitizeDiscordText(ctx.message.author.username),
 						days,
 					})
@@ -115,21 +94,9 @@ module.exports = new Command({
 		}
 
 		if (adminMatch && resetMatch) {
-			return ctx.message.reply(
-				safeReply(
-					ctx.t("test:report_admin_reset", {
-						user: sanitizeDiscordText(ctx.message.author.username),
-					})
-				)
-			);
+			return ctx.message.reply(safeReply(ctx.t("test:report_admin_reset")));
 		}
 
-		return ctx.message.reply(
-			safeReply(
-				ctx.t("test:report_prefix", {
-					user: sanitizeDiscordText(ctx.message.author.username),
-				})
-			)
-		);
+		return ctx.message.reply(safeReply(ctx.t("test:report_prefix")));
 	},
 });

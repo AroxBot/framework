@@ -42,6 +42,45 @@ export const allowedLocales = [
 ] as const satisfies readonly `${Locale}`[];
 
 const allowedLocalesSet = new Set<string>(allowedLocales);
+const templateTokenRegex = /{{\s*([^{}]+?)\s*}}/g;
+
+export function sanitizeDiscordText(value: unknown): string {
+	if (value == null) return "";
+
+	let text: string;
+	if (typeof value === "string") {
+		text = value;
+	} else if (
+		typeof value === "number" ||
+		typeof value === "boolean" ||
+		typeof value === "bigint"
+	) {
+		text = `${value}`;
+	} else if (value instanceof Date) {
+		text = value.toISOString();
+	} else if (typeof value === "object") {
+		text = JSON.stringify(value);
+	} else if (typeof value === "symbol") {
+		text = value.description ? `Symbol(${value.description})` : "Symbol()";
+	} else if (typeof value === "function") {
+		text = value.name ? `[Function: ${value.name}]` : "[Function]";
+	} else {
+		text = "";
+	}
+
+	return text.replaceAll("@", "@\u200b");
+}
+
+export function parseThings<TContext>(
+	value: string,
+	ctx: TContext,
+	resolver: (name: string, ctx: TContext) => string | undefined
+): string {
+	return String(value).replace(templateTokenRegex, (full, name: string) => {
+		const resolved = resolver(name.trim(), ctx);
+		return typeof resolved === "string" ? resolved : full;
+	});
+}
 
 export function deleteMessageAfterSent(
 	message: Message | InteractionResponse,
