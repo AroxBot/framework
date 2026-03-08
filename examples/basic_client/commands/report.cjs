@@ -4,6 +4,7 @@ const {
 	MessageCommandParser,
 	sanitizeDiscordText,
 } = require("../../../dist/index.cjs");
+const adminOnly = require("../preconditions/adminOnly.cjs");
 
 const safeReply = (content) => ({
 	content,
@@ -99,4 +100,4 @@ module.exports = new Command({
 
 		return ctx.message.reply(safeReply(ctx.t("test:report_prefix")));
 	},
-});
+}).addPrecondition(require("../preconditions/error.cjs"));

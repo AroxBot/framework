@@ -164,8 +164,8 @@ export class AutoSlashCommandSubcommandBuilder extends SlashCommandSubcommandBui
 		input:
 			| SlashCommandMentionableOption
 			| ((
-					builder: SlashCommandMentionableOption
-			  ) => SlashCommandMentionableOption)
+				builder: SlashCommandMentionableOption
+			) => SlashCommandMentionableOption)
 	) {
 		if (typeof input !== "function") return super.addMentionableOption(input);
 		return super.addMentionableOption((builder) =>
@@ -177,8 +177,8 @@ export class AutoSlashCommandSubcommandBuilder extends SlashCommandSubcommandBui
 		input:
 			| SlashCommandAttachmentOption
 			| ((
-					builder: SlashCommandAttachmentOption
-			  ) => SlashCommandAttachmentOption)
+				builder: SlashCommandAttachmentOption
+			) => SlashCommandAttachmentOption)
 	) {
 		if (typeof input !== "function") return super.addAttachmentOption(input);
 		return super.addAttachmentOption((builder) =>
@@ -196,8 +196,8 @@ export class AutoSlashCommandSubcommandGroupBuilder extends SlashCommandSubcomma
 		input:
 			| SlashCommandSubcommandBuilder
 			| ((
-					subcommandGroup: SlashCommandSubcommandBuilder
-			  ) => SlashCommandSubcommandBuilder)
+				subcommandGroup: SlashCommandSubcommandBuilder
+			) => SlashCommandSubcommandBuilder)
 	) {
 		if (typeof input !== "function") return super.addSubcommand(input);
 		return super.addSubcommand((builder) =>
@@ -207,6 +207,7 @@ export class AutoSlashCommandSubcommandGroupBuilder extends SlashCommandSubcomma
 }
 
 export class ApplicationCommandBuilder extends SlashCommandBuilder {
+
 	protected prefix_support: boolean = true;
 	protected slash_support: boolean = true;
 
@@ -305,8 +306,8 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		input:
 			| SlashCommandMentionableOption
 			| ((
-					builder: SlashCommandMentionableOption
-			  ) => SlashCommandMentionableOption)
+				builder: SlashCommandMentionableOption
+			) => SlashCommandMentionableOption)
 	) {
 		if (typeof input !== "function") return super.addMentionableOption(input);
 		return super.addMentionableOption((builder) =>
@@ -318,8 +319,8 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		input:
 			| SlashCommandAttachmentOption
 			| ((
-					builder: SlashCommandAttachmentOption
-			  ) => SlashCommandAttachmentOption)
+				builder: SlashCommandAttachmentOption
+			) => SlashCommandAttachmentOption)
 	) {
 		if (typeof input !== "function") return super.addAttachmentOption(input);
 		return super.addAttachmentOption((builder) =>
@@ -331,8 +332,8 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		input:
 			| SlashCommandSubcommandBuilder
 			| ((
-					subcommandGroup: SlashCommandSubcommandBuilder
-			  ) => SlashCommandSubcommandBuilder)
+				subcommandGroup: SlashCommandSubcommandBuilder
+			) => SlashCommandSubcommandBuilder)
 	) {
 		if (typeof input !== "function") return super.addSubcommand(input);
 		return super.addSubcommand((builder) =>
@@ -344,8 +345,8 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 		input:
 			| SlashCommandSubcommandGroupBuilder
 			| ((
-					subcommandGroup: SlashCommandSubcommandGroupBuilder
-			  ) => SlashCommandSubcommandGroupBuilder)
+				subcommandGroup: SlashCommandSubcommandGroupBuilder
+			) => SlashCommandSubcommandGroupBuilder)
 	) {
 		if (typeof input !== "function") return super.addSubcommandGroup(input);
 		return super.addSubcommandGroup((builder) =>

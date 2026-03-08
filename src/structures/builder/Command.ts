@@ -2,6 +2,8 @@ import { Client } from "@structures/index.js";
 import { Logger } from "@utils/index.js";
 import type { MaybePromise } from "#types/extra.js";
 import { ApplicationCommandBuilder } from "@structures/builder/Builder.js";
+import { Precondition } from "@structures/builder/Precondition.js";
+import type { IPrecondition } from "#types/precondition.js";
 import type {
 	InteractionContextJSON,
 	MessageContextJSON,
@@ -12,6 +14,7 @@ type InteractionContext = InteractionContextJSON;
 type CommandContext = MessageContext | InteractionContext;
 
 export class CommandBuilder {
+	readonly preconditions: Precondition[] = [];
 	#client: Client | null = null;
 	#logger: Logger | null = null;
 	#supportsSlash: boolean;
@@ -61,6 +64,26 @@ export class CommandBuilder {
 				`Command ${name} must support either slash or prefix commands.`
 			);
 		}
+	}
+
+	addPrecondition(precondition: IPrecondition) {
+		this.preconditions.push(new Precondition(precondition));
+		return this;
+	}
+
+	addPreconditions(...preconditions: IPrecondition[]) {
+		for (const precondition of preconditions) {
+			this.preconditions.push(new Precondition(precondition));
+		}
+		return this;
+	}
+
+	async checkPreconditions(ctx: CommandContext): Promise<Precondition | null> {
+		for (const precondition of this.preconditions) {
+			const passed = await precondition.check(ctx);
+			if (!passed) return precondition;
+		}
+		return null;
 	}
 
 	attach(client: Client) {
