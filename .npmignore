@@ -1,0 +1,17 @@
+# Github
+.github
+CHANGELOG.md
+cargo.toml
+.husky
+cliff.toml
+
+# Test
+examples
+
+# Build
+src
+scripts
+tsconfig.json
+.oxfmtrc.json
+package-lock.json
+.swcrc

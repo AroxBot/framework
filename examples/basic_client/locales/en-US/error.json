@@ -1,0 +1,4 @@
+{
+	"command.notfound": "Command not found or disabled1",
+	"command.disabled": "Command not found or disabled2"
+}
