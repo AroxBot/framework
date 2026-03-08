@@ -6,24 +6,28 @@ import {
 	tagExists,
 	createRelease,
 } from "../utils/github.js";
-import { checkVersionExists, GITHUB_URL, getNpmDistTag } from "../utils/npm.js";
-import { exec, generateChangelog, isMain } from "../utils/util.js";
+import {
+	checkVersionExists,
+	GITHUB_URL,
+	publishTarball,
+} from "../utils/npm.js";
+import { generateChangelog, isMain } from "../utils/util.js";
 
-async function buildProject() {
-	const github_token = process.env.GITHUB_TOKEN;
-	if (!github_token) {
+async function runGitHubRelease() {
+	const githubToken = process.env.GITHUB_TOKEN;
+	if (!githubToken) {
 		throw new Error("Github Token Not Found");
 	}
 
 	const { owner, repo } = getRepoInfo();
 	const sha = getSha();
 
-	const tempjson = {
+	const releasePackageJson = {
 		...packageJson,
 		name: `@${owner}/${packageJson.name}`,
 	};
 
-	const version = tempjson.version;
+	const version = releasePackageJson.version;
 
 	if (!version) {
 		throw new Error("package.json version not found");
@@ -34,12 +38,16 @@ async function buildProject() {
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
 
-	const npmVerExists = checkVersionExists(tempjson.name, version, GITHUB_URL);
+	const npmVerExists = checkVersionExists(
+		releasePackageJson.name,
+		version,
+		GITHUB_URL
+	);
 	const githubTagExists = tagExists(version);
 
 	let buildPath = null;
 	const ensureBuildPath = async () => {
-		buildPath ??= await build(tempjson);
+		buildPath ??= await build(releasePackageJson);
 		return buildPath;
 	};
 
@@ -67,11 +75,7 @@ async function buildProject() {
 
 			const tarballPath = await ensureBuildPath();
 
-			const distTag = getNpmDistTag(version);
-			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
-			exec(`npm publish "${tarballPath}" --registry=${GITHUB_URL}${tagArg}`, {
-				stdio: "inherit",
-			});
+			publishTarball(tarballPath, GITHUB_URL, version);
 		} catch (error) {
 			console.log(error);
 			throw new Error("Failed to publish package to GitHub Packages");
@@ -80,7 +84,7 @@ async function buildProject() {
 }
 
 if (isMain(import.meta.url)) {
-	buildProject().catch((err) => {
+	runGitHubRelease().catch((err) => {
 		console.error("Patch failed:", err);
 		process.exit(1);
 	});

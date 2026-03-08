@@ -1,19 +1,19 @@
 import packageJson from "../../package.json" with { type: "json" };
 import build from "../utils/build.js";
 import { getSha } from "../utils/github.js";
-import { checkVersionExists, NPM_URL, getNpmDistTag } from "../utils/npm.js";
-import { exec, isMain } from "../utils/util.js";
+import { checkVersionExists, NPM_URL, publishTarball } from "../utils/npm.js";
+import { isMain } from "../utils/util.js";
 
-async function buildProject() {
+async function runNpmRelease() {
 	const owner = process.env.NPM_ORG;
 	const sha = getSha();
 
-	const tempjson = {
+	const releasePackageJson = {
 		...packageJson,
 		name: owner ? `@${owner}/${packageJson.name}` : packageJson.name,
 	};
 
-	const version = tempjson.version;
+	const version = releasePackageJson.version;
 
 	if (!version) {
 		throw new Error("package.json version not found");
@@ -23,11 +23,15 @@ async function buildProject() {
 	console.log(`Version: ${version}`);
 	console.log(`Current commit: ${sha.slice(0, 7)}`);
 
-	const npmVerExists = checkVersionExists(tempjson.name, version, NPM_URL);
+	const npmVerExists = checkVersionExists(
+		releasePackageJson.name,
+		version,
+		NPM_URL
+	);
 
 	let buildPath = null;
 	const ensureBuildPath = async () => {
-		buildPath ??= await build(tempjson);
+		buildPath ??= await build(releasePackageJson);
 		return buildPath;
 	};
 
@@ -39,14 +43,7 @@ async function buildProject() {
 
 			const tarballPath = await ensureBuildPath();
 
-			const distTag = getNpmDistTag(version);
-			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
-			exec(
-				`npm publish "${tarballPath}" --provenance --registry=${NPM_URL}${tagArg}`,
-				{
-					stdio: "inherit",
-				}
-			);
+			publishTarball(tarballPath, NPM_URL, version, { provenance: true });
 		} catch (error) {
 			console.log(error);
 			throw new Error("Failed to publish package to npm");
@@ -55,7 +52,7 @@ async function buildProject() {
 }
 
 if (isMain(import.meta.url)) {
-	buildProject().catch((err) => {
+	runNpmRelease().catch((err) => {
 		console.error("Patch failed:", err);
 		process.exit(1);
 	});

@@ -1,4 +1,4 @@
-name: Push Code
+name: Release Pipeline
 
 on:
   pull_request_review:
@@ -12,10 +12,18 @@ permissions:
   packages: write
   id-token: write
 
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "25"
+
 jobs:
   check:
+    name: Validate
     runs-on: ubuntu-latest
-    if: |
+    if: >
       github.event_name == 'push' ||
       (github.event_name == 'pull_request_review' &&
        github.event.review.state == 'approved')
@@ -27,19 +35,20 @@ jobs:
       - name: Setup Node.js (with npm cache)
         uses: actions/setup-node@v4.0.2
         with:
-          node-version: "25"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           registry-url: "https://npm.pkg.github.com"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Check Compatibility
         run: npm run check
 
   release_git:
+    name: Publish GitHub Release
     needs: check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -53,14 +62,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4.0.2
         with:
-          node-version: "25"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           registry-url: "https://npm.pkg.github.com"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install git-cliff
         uses: taiki-e/install-action@git-cliff
@@ -73,6 +82,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
 
   release_npm:
+    name: Publish npm Package
     needs: check
     environment: npm
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -87,12 +97,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4.0.2
         with:
-          node-version: "25"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run npm release script
         run: node scripts/actions/npm.js

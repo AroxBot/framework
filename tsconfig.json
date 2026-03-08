@@ -44,8 +44,8 @@
 
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": false,
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 
 		"preserveConstEnums": true,
 		"pretty": true,
@@ -56,7 +56,7 @@
 		"composite": false,
 		"sourceMap": false,
 
-		"verbatimModuleSyntax": false
+		"verbatimModuleSyntax": true
 	},
 	"include": ["src/**/*", "types/**/*"],
 	"exclude": ["node_modules/**/*", "dist/**/*", "scripts/**/*"]
