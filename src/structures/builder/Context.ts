@@ -149,10 +149,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			: (fallback ?? key);
 	}
 
-	getLocalizationAliases(
-		key: string,
-		fallback?: string | string[]
-	): string[] {
+	getLocalizationAliases(key: string, fallback?: string | string[]): string[] {
 		const fallbackList = this.#toAliasList(fallback ?? []);
 		if (!this.client.i18n) return fallbackList;
 
@@ -191,11 +188,11 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			return {
 				kind: "interaction" as const,
 				interaction: data as ChatInputCommandInteraction,
-					author,
-					t,
-					getDefaultLocalization,
-					getLocalizationAliases,
-				};
+				author,
+				t,
+				getDefaultLocalization,
+				getLocalizationAliases,
+			};
 		}
 
 		return {

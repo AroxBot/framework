@@ -38,7 +38,9 @@ export class MessageCommandParser {
 		return this.ctx
 			.getLocalizationAliases(key, fallbackAliases)
 			.map(MessageCommandParser.normalizeToken)
-			.filter((value, index, arr) => value.length > 0 && arr.indexOf(value) === index);
+			.filter(
+				(value, index, arr) => value.length > 0 && arr.indexOf(value) === index
+			);
 	}
 
 	private findClosestAlias(
@@ -65,7 +67,9 @@ export class MessageCommandParser {
 		const aliasSet = new Set(aliases);
 		if (aliasSet.has(token)) return true;
 		if (!options.useFuzzy) return false;
-		return this.findClosestAlias(token, aliases, options.maxDistance ?? 1) !== null;
+		return (
+			this.findClosestAlias(token, aliases, options.maxDistance ?? 1) !== null
+		);
 	}
 
 	parseIntegerOption(config: IntegerOptionConfig): number {
@@ -96,8 +100,7 @@ export class MessageCommandParser {
 
 			if (
 				aliases.has(token) ||
-				(useFuzzy &&
-					this.findClosestAlias(token, aliasList, maxDistance))
+				(useFuzzy && this.findClosestAlias(token, aliasList, maxDistance))
 			) {
 				const parsed = Number.parseInt(this.normalizedArgs[i + 1] ?? "", 10);
 				if (Number.isFinite(parsed) && parsed > 0) return parsed;
