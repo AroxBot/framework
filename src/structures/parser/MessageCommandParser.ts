@@ -37,7 +37,7 @@ export class MessageCommandParser {
 	getAliases(key: string, fallbackAliases: string[] = []): string[] {
 		return this.ctx
 			.getLocalizationAliases(key, fallbackAliases)
-			.map(MessageCommandParser.normalizeToken)
+			.map((value) => MessageCommandParser.normalizeToken(value))
 			.filter(
 				(value, index, arr) => value.length > 0 && arr.indexOf(value) === index
 			);

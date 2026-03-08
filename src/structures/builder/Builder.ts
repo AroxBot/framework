@@ -22,7 +22,6 @@ import { localizeApplicationCommand } from "@utils/applicationCommandLocalizatio
 export interface ApplicationJSONBody extends RESTPostAPIChatInputApplicationCommandsJSONBody {
 	prefix_support: boolean;
 	slash_support: boolean;
-	aliases: string[];
 }
 
 export class AutoSlashCommandStringOption extends SlashCommandStringOption {
@@ -210,7 +209,16 @@ export class AutoSlashCommandSubcommandGroupBuilder extends SlashCommandSubcomma
 export class ApplicationCommandBuilder extends SlashCommandBuilder {
 	protected prefix_support: boolean = true;
 	protected slash_support: boolean = true;
-	protected aliases: string[] = [];
+
+	setPrefixSupport(value: boolean = true) {
+		this.prefix_support = value;
+		return this;
+	}
+
+	setSlashSupport(value: boolean = true) {
+		this.slash_support = value;
+		return this;
+	}
 
 	autoSet(key: string) {
 		return applyAutoSet(this, key);
@@ -347,6 +355,8 @@ export class ApplicationCommandBuilder extends SlashCommandBuilder {
 
 	override toJSON(): ApplicationJSONBody {
 		const json = super.toJSON() as ApplicationJSONBody;
+		json.prefix_support = this.prefix_support;
+		json.slash_support = this.slash_support;
 		this.assertNoMixedTopLevelOptionTypes(json);
 		return json;
 	}

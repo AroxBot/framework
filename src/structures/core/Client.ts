@@ -36,7 +36,8 @@ export class Client<
 > extends DiscordClient<Ready> {
 	readonly logger: Logger;
 	commands: Collection<string, CommandBuilder>;
-	aliases: Collection<string, Set<string>>;
+	private slashCommandLookup: Map<string, CommandBuilder> | null = null;
+	private prefixCommandLookup: Map<string, CommandBuilder> | null = null;
 	readonly prefix: PrefixFn;
 	i18n: i18n | undefined;
 
@@ -48,7 +49,6 @@ export class Client<
 		super({ ...defaultOpts, ...opts } as FrameworkOptions);
 		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
-		this.aliases = new Collection();
 		this.prefix = this.options.prefix ?? (() => false);
 		if (this.options.i18n) {
 			this.i18n = this.options.i18n;
@@ -70,6 +70,7 @@ export class Client<
 		if (this.i18n && !this.i18n.isInitialized) {
 			await this.i18n.init();
 		}
+		this.invalidateCommandLookupCache();
 		return super.login(token);
 	}
 
@@ -175,6 +176,50 @@ export class Client<
 		return name.trim().toLowerCase();
 	}
 
+	public invalidateCommandLookupCache() {
+		this.slashCommandLookup = null;
+		this.prefixCommandLookup = null;
+	}
+
+	private buildCommandLookup(forPrefix: boolean): Map<string, CommandBuilder> {
+		const lookup = new Map<string, CommandBuilder>();
+
+		for (const command of this.commands.values()) {
+			if (forPrefix ? !command.supportsPrefix : !command.supportsSlash)
+				continue;
+
+			const json = command.data.toClientJSON(this);
+			const localizedNames = Object.values(
+				json.name_localizations ?? {}
+			).filter((name): name is string => typeof name === "string");
+			for (const candidateName of new Set<string>([
+				json.name,
+				...localizedNames,
+			])) {
+				const normalized = this.normalizeCommandName(candidateName);
+				if (!lookup.has(normalized)) {
+					lookup.set(normalized, command);
+				}
+			}
+		}
+
+		return lookup;
+	}
+
+	private getSlashCommandLookup(): Map<string, CommandBuilder> {
+		if (!this.slashCommandLookup) {
+			this.slashCommandLookup = this.buildCommandLookup(false);
+		}
+		return this.slashCommandLookup;
+	}
+
+	private getPrefixCommandLookup(): Map<string, CommandBuilder> {
+		if (!this.prefixCommandLookup) {
+			this.prefixCommandLookup = this.buildCommandLookup(true);
+		}
+		return this.prefixCommandLookup;
+	}
+
 	public getSlashCommandsPayload() {
 		return this.commands
 			.filter((cmd) => cmd.supportsSlash)
@@ -190,23 +235,7 @@ export class Client<
 			this.commands.get(normalizedName) ?? this.commands.get(commandName);
 		if (direct?.supportsSlash) return direct;
 
-		for (const command of this.commands.values()) {
-			if (!command.supportsSlash) continue;
-
-			const json = command.data.toClientJSON(this);
-			const localizedNames = Object.values(
-				json.name_localizations ?? {}
-			).filter((name): name is string => typeof name === "string");
-			const candidateNames = new Set<string>([json.name, ...localizedNames]);
-
-			for (const candidateName of candidateNames) {
-				if (this.normalizeCommandName(candidateName) === normalizedName) {
-					return command;
-				}
-			}
-		}
-
-		return undefined;
+		return this.getSlashCommandLookup().get(normalizedName);
 	}
 
 	public resolveMessageCommand(
@@ -218,40 +247,7 @@ export class Client<
 			this.commands.get(normalizedName) ?? this.commands.get(commandName);
 		if (direct?.supportsPrefix) return direct;
 
-		const aliasOwner = this.aliases.findKey((aliases) => {
-			for (const alias of aliases) {
-				if (this.normalizeCommandName(alias) === normalizedName) {
-					return true;
-				}
-			}
-			return false;
-		});
-		if (aliasOwner) {
-			const aliased = this.commands.get(aliasOwner);
-			if (aliased?.supportsPrefix) return aliased;
-		}
-
-		for (const command of this.commands.values()) {
-			if (!command.supportsPrefix) continue;
-
-			const json = command.data.toClientJSON(this);
-			const localizedNames = Object.values(
-				json.name_localizations ?? {}
-			).filter((name): name is string => typeof name === "string");
-			const candidateNames = new Set<string>([
-				command.data.toJSON().name,
-				json.name,
-				...localizedNames,
-			]);
-
-			for (const candidateName of candidateNames) {
-				if (this.normalizeCommandName(candidateName) === normalizedName) {
-					return command;
-				}
-			}
-		}
-
-		return undefined;
+		return this.getPrefixCommandLookup().get(normalizedName);
 	}
 
 	public async registerCommands() {

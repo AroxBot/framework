@@ -4,6 +4,13 @@ const {
 	MessageCommandParser,
 } = require("../../../dist/index.cjs");
 
+const sanitizeDiscordText = (value) =>
+	String(value ?? "").replaceAll("@", "@\u200b");
+const safeReply = (content) => ({
+	content,
+	allowedMentions: { parse: [] },
+});
+
 module.exports = new Command({
 	data: new ApplicationCommandBuilder()
 		.autoSet("report")
@@ -22,36 +29,36 @@ module.exports = new Command({
 
 		if (group === "admin" && subcommand === "reset") {
 			return ctx.interaction.reply(
-				ctx.t("test:report_admin_reset", {
-					user: ctx.interaction.user.username,
-				})
+				safeReply(
+					ctx.t("test:report_admin_reset", {
+						user: sanitizeDiscordText(ctx.interaction.user.username),
+					})
+				)
 			);
 		}
 
 		if (subcommand === "summary") {
-			const memberOption = ctx.getDefaultLocalization(
-				"command:report.subcommand.summary.user.member.name",
-				"member"
-			);
-			const daysOption = ctx.getDefaultLocalization(
-				"command:report.subcommand.summary.number.days.name",
-				"days"
-			);
-			const member = ctx.interaction.options.getUser(memberOption, false);
-			const days = ctx.interaction.options.getNumber(daysOption, false) ?? 7;
+			const member = ctx.interaction.options.getUser("member", false);
+			const days = ctx.interaction.options.getNumber("days", false) ?? 7;
 			return ctx.interaction.reply(
-				ctx.t("test:report_summary", {
-					user: ctx.interaction.user.username,
-					member: member?.username ?? ctx.interaction.user.username,
-					days,
-				})
+				safeReply(
+					ctx.t("test:report_summary", {
+						user: sanitizeDiscordText(ctx.interaction.user.username),
+						member: sanitizeDiscordText(
+							member?.username ?? ctx.interaction.user.username
+						),
+						days,
+					})
+				)
 			);
 		}
 
 		return ctx.interaction.reply(
-			ctx.t("test:report_ready", {
-				user: ctx.interaction.user.username,
-			})
+			safeReply(
+				ctx.t("test:report_ready", {
+					user: sanitizeDiscordText(ctx.interaction.user.username),
+				})
+			)
 		);
 	},
 	onMessage: (ctx) => {
@@ -59,7 +66,11 @@ module.exports = new Command({
 		const first = ctx.args[0];
 		if (!first) {
 			return ctx.message.reply(
-				ctx.t("test:report_prefix", { user: ctx.message.author.username })
+				safeReply(
+					ctx.t("test:report_prefix", {
+						user: sanitizeDiscordText(ctx.message.author.username),
+					})
+				)
 			);
 		}
 
@@ -93,24 +104,32 @@ module.exports = new Command({
 			});
 
 			return ctx.message.reply(
-				ctx.t("test:report_summary", {
-					user: ctx.message.author.username,
-					member: ctx.message.author.username,
-					days,
-				})
+				safeReply(
+					ctx.t("test:report_summary", {
+						user: sanitizeDiscordText(ctx.message.author.username),
+						member: sanitizeDiscordText(ctx.message.author.username),
+						days,
+					})
+				)
 			);
 		}
 
 		if (adminMatch && resetMatch) {
 			return ctx.message.reply(
-				ctx.t("test:report_admin_reset", {
-					user: ctx.message.author.username,
-				})
+				safeReply(
+					ctx.t("test:report_admin_reset", {
+						user: sanitizeDiscordText(ctx.message.author.username),
+					})
+				)
 			);
 		}
 
 		return ctx.message.reply(
-			ctx.t("test:report_prefix", { user: ctx.message.author.username })
+			safeReply(
+				ctx.t("test:report_prefix", {
+					user: sanitizeDiscordText(ctx.message.author.username),
+				})
+			)
 		);
 	},
 });

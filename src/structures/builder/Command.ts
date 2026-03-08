@@ -66,7 +66,7 @@ export class CommandBuilder {
 	attach(client: Client) {
 		if (this.#attached) return this;
 		const commandJSON = this.data.toJSON();
-		const { name, aliases } = commandJSON;
+		const { name } = commandJSON;
 
 		this.#client = client;
 		this.#logger = client.logger;
@@ -75,35 +75,8 @@ export class CommandBuilder {
 			throw new Error(`Command name "${name}" is already registered.`);
 		}
 
-		const existingAliasOwner = client.aliases.findKey((aliases) =>
-			aliases.has(name)
-		);
-		if (existingAliasOwner) {
-			throw new Error(
-				`Command name "${name}" is already registered as an alias for command "${existingAliasOwner}".`
-			);
-		}
-
-		for (const alias of aliases) {
-			if (client.commands.has(alias)) {
-				throw new Error(
-					`Alias "${alias}" is already registered as a command name.`
-				);
-			}
-			const conflictingCommand = client.aliases.findKey((aliases) =>
-				aliases.has(alias)
-			);
-			if (conflictingCommand) {
-				throw new Error(
-					`Alias "${alias}" is already registered as an alias for command "${conflictingCommand}".`
-				);
-			}
-		}
-
 		client.commands.set(name, this);
-		if (aliases.length > 0) {
-			client.aliases.set(name, new Set(aliases));
-		}
+		client.invalidateCommandLookupCache();
 		this.logger.debug(`Loaded Command ${name}`);
 		this.#attached = true;
 		return this;

@@ -33,12 +33,16 @@ const getLocales = (instance: i18n): string[] => {
 
 const buildLocalizationMap = (
 	instance: i18n,
-	path: string
+	path: string,
+	defaultValue: string
 ): Record<string, string> => {
 	const map: Record<string, string> = {};
 	for (const locale of getLocales(instance)) {
-		const translated = instance.t(path, { lng: locale, defaultValue: path });
-		map[locale] = typeof translated === "string" ? translated : path;
+		const translated = instance.t(path, { lng: locale, defaultValue });
+		map[locale] =
+			typeof translated === "string" && translated.length > 0
+				? translated
+				: defaultValue;
 	}
 	return map;
 };
@@ -58,11 +62,16 @@ const localizeOption = (
 		keyPath = `${parentPath}.${typePath}.${option.name}`;
 	}
 
-	option.name_localizations = buildLocalizationMap(instance, `${keyPath}.name`);
+	option.name_localizations = buildLocalizationMap(
+		instance,
+		`${keyPath}.name`,
+		option.name
+	);
 	if (typeof option.description === "string") {
 		option.description_localizations = buildLocalizationMap(
 			instance,
-			`${keyPath}.description`
+			`${keyPath}.description`,
+			option.description
 		);
 	}
 
@@ -78,11 +87,13 @@ export const localizeApplicationCommand = (
 	const commandPath = `command:${json.name}`;
 	json.name_localizations = buildLocalizationMap(
 		instance,
-		`${commandPath}.name`
+		`${commandPath}.name`,
+		json.name
 	);
 	json.description_localizations = buildLocalizationMap(
 		instance,
-		`${commandPath}.description`
+		`${commandPath}.description`,
+		json.description
 	);
 
 	for (const option of (json.options ?? []) as OptionJSON[]) {
