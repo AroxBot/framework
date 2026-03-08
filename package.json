@@ -41,7 +41,7 @@
 	"scripts": {
 		"prepare": "node scripts/prepareHusky.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"check": "oxfmt --check && oxlint --type-aware --type-check",
+		"check": "oxlint --type-aware --type-check && oxfmt --check",
 		"format": "oxfmt",
 		"build:js": "node ./scripts/build.js",
 		"build:dts": "tsc --emitDeclarationOnly && tsc-alias -p tsconfig.json && node ./scripts/createCjsTypes.js",

@@ -15,6 +15,8 @@ import type {
 	ModuleExport,
 	ModuleExportFactory,
 	PrefixFn,
+	TemplateContext,
+	TemplateParserFn,
 } from "#types/client.js";
 import {
 	getDefaultLang,
@@ -38,8 +40,17 @@ export class Client<
 	commands: Collection<string, CommandBuilder>;
 	private slashCommandLookup: Map<string, CommandBuilder> | null = null;
 	private prefixCommandLookup: Map<string, CommandBuilder> | null = null;
+	private readonly templateParsers: TemplateParserFn[] = [];
 	readonly prefix: PrefixFn;
 	i18n: i18n | undefined;
+	readonly i18next: {
+		readonly instance: i18n | undefined;
+		readonly parser: {
+			addParser: (parser: TemplateParserFn) => void;
+			removeParser: (parser: TemplateParserFn) => boolean;
+			clearParsers: () => void;
+		};
+	};
 
 	declare options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
@@ -54,6 +65,20 @@ export class Client<
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
+		this.i18next = {
+			instance: this.i18n,
+			parser: {
+				addParser: (parser: TemplateParserFn) => {
+					this.addTemplateParser(parser);
+				},
+				removeParser: (parser: TemplateParserFn) => {
+					return this.removeTemplateParser(parser);
+				},
+				clearParsers: () => {
+					this.clearTemplateParsers();
+				},
+			},
+		};
 	}
 	override async login(token?: string) {
 		await this.#loadCoreEvents();
@@ -179,6 +204,36 @@ export class Client<
 	public invalidateCommandLookupCache() {
 		this.slashCommandLookup = null;
 		this.prefixCommandLookup = null;
+	}
+
+	public addTemplateParser(parser: TemplateParserFn) {
+		if (!this.templateParsers.includes(parser)) {
+			this.templateParsers.push(parser);
+		}
+	}
+
+	public removeTemplateParser(parser: TemplateParserFn): boolean {
+		const index = this.templateParsers.indexOf(parser);
+		if (index === -1) return false;
+		this.templateParsers.splice(index, 1);
+		return true;
+	}
+
+	public clearTemplateParsers() {
+		this.templateParsers.length = 0;
+	}
+
+	public parseTemplateToken(
+		key: string,
+		context: TemplateContext
+	): string | undefined {
+		for (const parser of this.templateParsers) {
+			const value = parser(key, context);
+			if (typeof value === "string") {
+				return value;
+			}
+		}
+		return undefined;
 	}
 
 	private buildCommandLookup(forPrefix: boolean): Map<string, CommandBuilder> {

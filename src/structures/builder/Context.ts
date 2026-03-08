@@ -159,6 +159,16 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return undefined;
 	}
 
+	private resolveTemplateToken(name: string): string | undefined {
+		return (
+			this.resolveContextToken(name) ??
+			this.client.parseTemplateToken(
+				name,
+				this as Context<ChatInputCommandInteraction | Message>
+			)
+		);
+	}
+
 	t(key: string, options?: TOptions & { defaultValue?: string }): string {
 		if (!this.client.i18n) {
 			throw new Error("i18n is not initialized");
@@ -174,7 +184,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return parseThings(
 			fallbacked,
 			this as Context<ChatInputCommandInteraction | Message>,
-			(name, ctx) => ctx.resolveContextToken(name)
+			(name, ctx) => ctx.resolveTemplateToken(name)
 		);
 	}
 
