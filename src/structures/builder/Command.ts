@@ -20,6 +20,14 @@ export class CommandBuilder {
 	_onMessage?: (ctx: MessageContext) => MaybePromise<void>;
 	_onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
 
+	protected createContextHandler<T extends CommandContext>(
+		primary: ((ctx: T) => MaybePromise<void>) | undefined,
+		fallback: ((ctx: CommandContext) => MaybePromise<void>) | undefined
+	) {
+		if (!primary && !fallback) return undefined;
+		return (ctx: T) => primary?.(ctx) ?? fallback?.(ctx);
+	}
+
 	get client(): Client {
 		if (!this.#client) throw new Error("Command is not attached to a client");
 		return this.#client;
@@ -31,10 +39,10 @@ export class CommandBuilder {
 	}
 
 	get supportsSlash() {
-		return this.#supportsSlash && this._onInteraction;
+		return this.#supportsSlash && Boolean(this._onInteraction);
 	}
 	get supportsPrefix() {
-		return this.#supportsPrefix && this._onMessage;
+		return this.#supportsPrefix && Boolean(this._onMessage);
 	}
 
 	constructor(public readonly data: ApplicationCommandBuilder) {
@@ -118,24 +126,19 @@ export class Command extends CommandBuilder {
 	constructor(options: CommandOptions) {
 		super(options.data);
 		const commandJSON = options.data.toJSON();
-		const execute = options.execute;
-		if (
-			(commandJSON.prefix_support ?? false) &&
-			(options.onMessage || execute)
-		) {
-			this.onMessage((ctx) => {
-				if (options.onMessage) return options.onMessage(ctx);
-				return execute?.(ctx);
-			});
+		if (commandJSON.prefix_support) {
+			const onMessage = this.createContextHandler(
+				options.onMessage,
+				options.execute
+			);
+			if (onMessage) this.onMessage(onMessage);
 		}
-		if (
-			(commandJSON.slash_support ?? false) &&
-			(options.onInteraction || execute)
-		) {
-			this.onInteraction((ctx) => {
-				if (options.onInteraction) return options.onInteraction(ctx);
-				return execute?.(ctx);
-			});
+		if (commandJSON.slash_support) {
+			const onInteraction = this.createContextHandler(
+				options.onInteraction,
+				options.execute
+			);
+			if (onInteraction) this.onInteraction(onInteraction);
 		}
 	}
 }

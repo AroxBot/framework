@@ -48,6 +48,26 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		) as `${Locale}` | undefined;
 	}
 
+	#getFallbackLocale(): `${Locale}` {
+		return ((Array.isArray(this.client.i18n?.options.fallbackLng)
+			? this.client.i18n.options.fallbackLng[0]
+			: this.client.i18n?.options.fallbackLng) ??
+			Locale.EnglishUS) as `${Locale}`;
+	}
+
+	#resolveLocale(): `${Locale}` {
+		return (this.locale ??
+			this.client.options.getDefaultLang?.(
+				this as Context<ChatInputCommandInteraction | Message>
+			) ??
+			this.#getFallbackLocale()) as `${Locale}`;
+	}
+
+	#createTranslator() {
+		return (key: string, options?: TOptions & { defaultValue?: string }) =>
+			this.t(key, options);
+	}
+
 	isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return this.data instanceof ChatInputCommandInteraction;
 	}
@@ -71,17 +91,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			throw new Error("i18n is not initialized");
 		}
 
-		const locale =
-			this.locale ??
-			this.client.options.getDefaultLang?.(
-				this as Context<ChatInputCommandInteraction | Message>
-			) ??
-			(Array.isArray(this.client.i18n.options.fallbackLng)
-				? this.client.i18n.options.fallbackLng[0]
-				: this.client.i18n.options.fallbackLng) ??
-			Locale.EnglishUS;
-
-		const t = this.client.i18n.getFixedT(locale);
+		const t = this.client.i18n.getFixedT(this.#resolveLocale());
 
 		const result = t(key, options);
 
@@ -96,13 +106,14 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 	toJSON(this: Context<Message>): MessageContextJSON;
 	toJSON(): InteractionContextJSON | MessageContextJSON {
 		const { data, args, author } = this;
+		const t = this.#createTranslator();
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
 				interaction: data as ChatInputCommandInteraction,
 				author,
-				t: (key, options) => this.t(key, options),
+				t,
 			};
 		}
 
@@ -111,7 +122,7 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			message: data as Message,
 			args,
 			author,
-			t: (key, options) => this.t(key, options),
+			t,
 		};
 	}
 }
