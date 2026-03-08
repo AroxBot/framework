@@ -56,7 +56,7 @@
 		"oxlint": "^1.39.0",
 		"oxlint-tsgolint": "^0.16.0",
 		"typescript": "~5",
-		"unplugin-oxc": "^0.5.7"
+		"unplugin-oxc": "^0.6.0"
 	},
 	"peerDependencies": {
 		"discord.js": ">=14.25.1"
