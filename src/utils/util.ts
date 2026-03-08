@@ -73,8 +73,5 @@ export function getDefaultLang(
 			Locale.EnglishUS
 		);
 	}
-	if (ctx.isMessage()) {
-		return toAllowedLocale(ctx.data.guild?.preferredLocale) ?? Locale.EnglishUS;
-	}
-	return Locale.EnglishUS;
+	return toAllowedLocale(ctx.data.guild?.preferredLocale) ?? Locale.EnglishUS;
 }
