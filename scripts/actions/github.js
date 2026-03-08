@@ -1,0 +1,87 @@
+import packageJson from "../../package.json" with { type: "json" };
+import build from "../utils/build.js";
+import {
+	getRepoInfo,
+	getSha,
+	tagExists,
+	createRelease,
+} from "../utils/github.js";
+import { checkVersionExists, GITHUB_URL, getNpmDistTag } from "../utils/npm.js";
+import { exec, generateChangelog, isMain } from "../utils/util.js";
+
+async function buildProject() {
+	const github_token = process.env.GITHUB_TOKEN;
+	if (!github_token) {
+		throw new Error("Github Token Not Found");
+	}
+
+	const { owner, repo } = getRepoInfo();
+	const sha = getSha();
+
+	const tempjson = {
+		...packageJson,
+		name: `@${owner}/${packageJson.name}`,
+	};
+
+	const version = tempjson.version;
+
+	if (!version) {
+		throw new Error("package.json version not found");
+	}
+
+	console.log("Starting GitHub Release Process");
+	console.log(`Repository: ${owner}/${repo}`);
+	console.log(`Version: ${version}`);
+	console.log(`Current commit: ${sha.slice(0, 7)}`);
+
+	const npmVerExists = checkVersionExists(tempjson.name, version, GITHUB_URL);
+	const githubTagExists = tagExists(version);
+
+	let buildPath = null;
+	const ensureBuildPath = async () => {
+		buildPath ??= await build(tempjson);
+		return buildPath;
+	};
+
+	if (githubTagExists) {
+		console.log(`Tag (git) ${version} already exists`);
+	} else {
+		try {
+			console.log(`Git tag ${version} does not exist`);
+
+			const tarballPath = await ensureBuildPath();
+
+			const changelog = generateChangelog(version);
+			createRelease(version, tarballPath, changelog);
+		} catch (error) {
+			console.log(error);
+			throw new Error("Failed to create GitHub release");
+		}
+	}
+
+	if (npmVerExists) {
+		console.log(`Version (npm) ${version} already exists`);
+	} else {
+		try {
+			console.log(`npm version ${version} does not exist`);
+
+			const tarballPath = await ensureBuildPath();
+
+			const distTag = getNpmDistTag(version);
+			const tagArg = distTag === "latest" ? "" : ` --tag ${distTag}`;
+			exec(`npm publish "${tarballPath}" --registry=${GITHUB_URL}${tagArg}`, {
+				stdio: "inherit",
+			});
+		} catch (error) {
+			console.log(error);
+			throw new Error("Failed to publish package to GitHub Packages");
+		}
+	}
+}
+
+if (isMain(import.meta.url)) {
+	buildProject().catch((err) => {
+		console.error("Patch failed:", err);
+		process.exit(1);
+	});
+}

@@ -1,0 +1,64 @@
+{
+	"name": "framework",
+	"version": "0.1.2-beta.1",
+	"description": "",
+	"keywords": [
+		"arox",
+		"discord.js",
+		"framework"
+	],
+	"homepage": "https://github.com/AroxBot/framework#readme",
+	"bugs": {
+		"url": "https://github.com/AroxBot/framework/issues"
+	},
+	"license": "Apache-2.0",
+	"author": "vrdons",
+	"contributors": [
+		"fhyrox"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/AroxBot/framework.git"
+	},
+	"type": "module",
+	"main": "dist/index.cjs",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"require": "./dist/index.cjs",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"prepare": "node scripts/prepareHusky.js",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"check": "oxfmt --check && oxlint --type-aware --type-check",
+		"format": "oxfmt",
+		"build:js": "node ./scripts/build.js",
+		"build:dts": "tsc --emitDeclarationOnly",
+		"build": "npm run build:js && npm run build:dts"
+	},
+	"dependencies": {
+		"@sapphire/timestamp": "^1.0.5",
+		"colorette": "^2.0.20",
+		"fast-glob": "^3.3.3",
+		"i18next": "^25.8.0"
+	},
+	"devDependencies": {
+		"esbuild": "^0.27.3",
+		"husky": "^9.1.7",
+		"i18next-fs-backend": "^2.6.1",
+		"libnpmpack": "~9",
+		"oxfmt": "^0.36.0",
+		"oxlint": "^1.39.0",
+		"oxlint-tsgolint": "^0.16.0",
+		"typescript": "~5",
+		"unplugin-oxc": "^0.5.7"
+	},
+	"peerDependencies": {
+		"discord.js": ">=14.25.1"
+	}
+}
