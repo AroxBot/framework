@@ -19,15 +19,10 @@ export default new EventBuilder(
 			return;
 
 		const args = message.content.slice(prefix.length).trim().split(/ +/);
-		const commandName = args.shift()?.toLowerCase();
+		const commandName = args.shift();
 		if (!commandName) return;
-
-		const commandAlias = context.client.aliases.findKey((cmd) =>
-			cmd.has(commandName)
-		);
 		const ctx = new Context(context.client, { message, args });
-
-		const command = context.client.commands.get(commandAlias ?? commandName);
+		const command = context.client.resolveMessageCommand(commandName);
 
 		if (!command) {
 			await message

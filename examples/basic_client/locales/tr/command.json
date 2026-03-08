@@ -1,0 +1,42 @@
+{
+	"report": {
+		"name": "rapor",
+		"alias": ["rapor"],
+		"description": "Rapor olusturur",
+		"subcommand": {
+			"summary": {
+				"name": "ozet",
+				"alias": ["ozet", "özet"],
+				"description": "Ozet verisini gosterir",
+				"user": {
+					"member": {
+						"name": "uye",
+						"alias": ["uye", "üye"],
+						"description": "Dahil edilecek uye"
+					}
+				},
+				"number": {
+					"days": {
+						"name": "gun",
+						"alias": ["gun", "gün", "gunler", "günler"],
+						"description": "Gun sayisi"
+					}
+				}
+			}
+		},
+		"group": {
+			"admin": {
+				"name": "yonetim",
+				"alias": ["yonetim", "yönetim"],
+				"description": "Yonetim grubu",
+				"subcommand": {
+					"reset": {
+						"name": "sifirla",
+						"alias": ["sifirla", "sıfırla"],
+						"description": "Ayarları sıfırlar"
+					}
+				}
+			}
+		}
+	}
+}

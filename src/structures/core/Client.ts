@@ -15,6 +15,8 @@ import type {
 	ModuleExport,
 	ModuleExportFactory,
 	PrefixFn,
+	TemplateContext,
+	TemplateParserFn,
 } from "#types/client.js";
 import {
 	getDefaultLang,
@@ -36,9 +38,19 @@ export class Client<
 > extends DiscordClient<Ready> {
 	readonly logger: Logger;
 	commands: Collection<string, CommandBuilder>;
-	aliases: Collection<string, Set<string>>;
+	private slashCommandLookup: Map<string, CommandBuilder> | null = null;
+	private prefixCommandLookup: Map<string, CommandBuilder> | null = null;
+	private readonly templateParsers: TemplateParserFn[] = [];
 	readonly prefix: PrefixFn;
 	i18n: i18n | undefined;
+	readonly i18next: {
+		readonly instance: i18n | undefined;
+		readonly parser: {
+			addParser: (parser: TemplateParserFn) => void;
+			removeParser: (parser: TemplateParserFn) => boolean;
+			clearParsers: () => void;
+		};
+	};
 
 	declare options: Omit<FrameworkOptions, "intents"> & {
 		intents: IntentsBitField;
@@ -48,12 +60,25 @@ export class Client<
 		super({ ...defaultOpts, ...opts } as FrameworkOptions);
 		this.logger = new Logger(opts.logger);
 		this.commands = new Collection();
-		this.aliases = new Collection();
 		this.prefix = this.options.prefix ?? (() => false);
 		if (this.options.i18n) {
 			this.i18n = this.options.i18n;
 			this.i18n.use(new I18nLoggerAdapter(this.logger));
 		}
+		this.i18next = {
+			instance: this.i18n,
+			parser: {
+				addParser: (parser: TemplateParserFn) => {
+					this.addTemplateParser(parser);
+				},
+				removeParser: (parser: TemplateParserFn) => {
+					return this.removeTemplateParser(parser);
+				},
+				clearParsers: () => {
+					this.clearTemplateParsers();
+				},
+			},
+		};
 	}
 	override async login(token?: string) {
 		await this.#loadCoreEvents();
@@ -70,6 +95,7 @@ export class Client<
 		if (this.i18n && !this.i18n.isInitialized) {
 			await this.i18n.init();
 		}
+		this.invalidateCommandLookupCache();
 		return super.login(token);
 	}
 
@@ -171,6 +197,122 @@ export class Client<
 		);
 	}
 
+	private normalizeCommandName(name: string): string {
+		return name.trim().toLowerCase();
+	}
+
+	public invalidateCommandLookupCache() {
+		this.slashCommandLookup = null;
+		this.prefixCommandLookup = null;
+	}
+
+	public addTemplateParser(parser: TemplateParserFn) {
+		if (!this.templateParsers.includes(parser)) {
+			this.templateParsers.push(parser);
+		}
+	}
+
+	public removeTemplateParser(parser: TemplateParserFn): boolean {
+		const index = this.templateParsers.indexOf(parser);
+		if (index === -1) return false;
+		this.templateParsers.splice(index, 1);
+		return true;
+	}
+
+	public clearTemplateParsers() {
+		this.templateParsers.length = 0;
+	}
+
+	public parseTemplateToken(
+		key: string,
+		context: TemplateContext
+	): string | undefined {
+		for (const parser of this.templateParsers) {
+			const value = parser(key, context);
+			if (typeof value === "string") {
+				return value;
+			}
+		}
+		return undefined;
+	}
+
+	private buildCommandLookup(forPrefix: boolean): Map<string, CommandBuilder> {
+		const lookup = new Map<string, CommandBuilder>();
+
+		for (const command of this.commands.values()) {
+			if (forPrefix ? !command.supportsPrefix : !command.supportsSlash)
+				continue;
+
+			const json = command.data.toClientJSON(this);
+			const localizedNames = Object.values(
+				json.name_localizations ?? {}
+			).filter((name): name is string => typeof name === "string");
+			for (const candidateName of new Set<string>([
+				json.name,
+				...localizedNames,
+			])) {
+				const normalized = this.normalizeCommandName(candidateName);
+				const existing = lookup.get(normalized);
+				if (!existing) {
+					lookup.set(normalized, command);
+					continue;
+				}
+				if (existing !== command) {
+					const existingName = existing.data.toJSON().name;
+					this.logger.warn(
+						`Command lookup conflict (${forPrefix ? "prefix" : "slash"}) for "${candidateName}" (normalized: "${normalized}"): "${json.name}" conflicts with "${existingName}". Keeping "${existingName}".`
+					);
+				}
+			}
+		}
+
+		return lookup;
+	}
+
+	private getSlashCommandLookup(): Map<string, CommandBuilder> {
+		if (!this.slashCommandLookup) {
+			this.slashCommandLookup = this.buildCommandLookup(false);
+		}
+		return this.slashCommandLookup;
+	}
+
+	private getPrefixCommandLookup(): Map<string, CommandBuilder> {
+		if (!this.prefixCommandLookup) {
+			this.prefixCommandLookup = this.buildCommandLookup(true);
+		}
+		return this.prefixCommandLookup;
+	}
+
+	public getSlashCommandsPayload() {
+		return this.commands
+			.filter((cmd) => cmd.supportsSlash)
+			.map((cmd) => cmd.data.toClientJSON(this));
+	}
+
+	public resolveInteractionCommand(
+		commandName: string
+	): CommandBuilder | undefined {
+		const normalizedName = this.normalizeCommandName(commandName);
+
+		const direct =
+			this.commands.get(normalizedName) ?? this.commands.get(commandName);
+		if (direct?.supportsSlash) return direct;
+
+		return this.getSlashCommandLookup().get(normalizedName);
+	}
+
+	public resolveMessageCommand(
+		commandName: string
+	): CommandBuilder | undefined {
+		const normalizedName = this.normalizeCommandName(commandName);
+
+		const direct =
+			this.commands.get(normalizedName) ?? this.commands.get(commandName);
+		if (direct?.supportsPrefix) return direct;
+
+		return this.getPrefixCommandLookup().get(normalizedName);
+	}
+
 	public async registerCommands() {
 		if (!this.token) {
 			this.logger.warn("registerCommands skipped: client token is not set.");
@@ -183,9 +325,7 @@ export class Client<
 			return;
 		}
 
-		const slashCommands = this.commands
-			.filter((cmd) => cmd.supportsSlash)
-			.map((cmd) => cmd.data.toClientJSON(this));
+		const slashCommands = this.getSlashCommandsPayload();
 
 		const rest = new REST({ version: "10" }).setToken(this.token);
 

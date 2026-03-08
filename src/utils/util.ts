@@ -43,6 +43,98 @@ export const allowedLocales = [
 
 const allowedLocalesSet = new Set<string>(allowedLocales);
 
+export function sanitizeDiscordText(value: unknown): string {
+	if (value == null) return "";
+
+	let text: string;
+	if (typeof value === "string") {
+		text = value;
+	} else if (
+		typeof value === "number" ||
+		typeof value === "boolean" ||
+		typeof value === "bigint"
+	) {
+		text = `${value}`;
+	} else if (value instanceof Date) {
+		text = value.toISOString();
+	} else if (typeof value === "object") {
+		text = JSON.stringify(value);
+	} else if (typeof value === "symbol") {
+		text = value.description ? `Symbol(${value.description})` : "Symbol()";
+	} else if (typeof value === "function") {
+		text = value.name ? `[Function: ${value.name}]` : "[Function]";
+	} else {
+		text = "";
+	}
+
+	return text.replaceAll("@", "@\u200b");
+}
+
+export function parseThings<TContext>(
+	value: string,
+	ctx: TContext,
+	resolver: (name: string, ctx: TContext) => string | undefined
+): string {
+	const text = String(value);
+	let cursor = 0;
+	let result = "";
+
+	while (cursor < text.length) {
+		const start = text.indexOf("{{", cursor);
+		if (start === -1) {
+			result += text.slice(cursor);
+			break;
+		}
+
+		result += text.slice(cursor, start);
+
+		const end = text.indexOf("}}", start + 2);
+		if (end === -1) {
+			result += text.slice(start);
+			break;
+		}
+
+		const fullToken = text.slice(start, end + 2);
+		const rawName = text.slice(start + 2, end);
+		const name = rawName.trim();
+
+		if (!name || rawName.includes("{") || rawName.includes("}")) {
+			result += fullToken;
+		} else {
+			const resolved = resolver(name, ctx);
+			result += typeof resolved === "string" ? resolved : fullToken;
+		}
+
+		cursor = end + 2;
+	}
+
+	return result;
+}
+
+export function collectTemplateTokens(value: string): Set<string> {
+	const text = String(value);
+	const tokens = new Set<string>();
+	let cursor = 0;
+
+	while (cursor < text.length) {
+		const start = text.indexOf("{{", cursor);
+		if (start === -1) break;
+
+		const end = text.indexOf("}}", start + 2);
+		if (end === -1) break;
+
+		const rawName = text.slice(start + 2, end);
+		const name = rawName.trim();
+		if (name && !rawName.includes("{") && !rawName.includes("}")) {
+			tokens.add(name);
+		}
+
+		cursor = end + 2;
+	}
+
+	return tokens;
+}
+
 export function deleteMessageAfterSent(
 	message: Message | InteractionResponse,
 	time = 15_000

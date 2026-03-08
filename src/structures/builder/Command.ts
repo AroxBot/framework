@@ -20,6 +20,19 @@ export class CommandBuilder {
 	_onMessage?: (ctx: MessageContext) => MaybePromise<void>;
 	_onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
 
+	protected createContextHandler<T extends CommandContext>(
+		primary: ((ctx: T) => MaybePromise<void>) | undefined,
+		fallback: ((ctx: CommandContext) => MaybePromise<void>) | undefined
+	) {
+		if (primary) {
+			return (ctx: T) => primary(ctx);
+		}
+		if (fallback) {
+			return (ctx: T) => fallback(ctx);
+		}
+		return undefined;
+	}
+
 	get client(): Client {
 		if (!this.#client) throw new Error("Command is not attached to a client");
 		return this.#client;
@@ -31,10 +44,10 @@ export class CommandBuilder {
 	}
 
 	get supportsSlash() {
-		return this.#supportsSlash && this._onInteraction;
+		return this.#supportsSlash && Boolean(this._onInteraction);
 	}
 	get supportsPrefix() {
-		return this.#supportsPrefix && this._onMessage;
+		return this.#supportsPrefix && Boolean(this._onMessage);
 	}
 
 	constructor(public readonly data: ApplicationCommandBuilder) {
@@ -53,7 +66,7 @@ export class CommandBuilder {
 	attach(client: Client) {
 		if (this.#attached) return this;
 		const commandJSON = this.data.toJSON();
-		const { name, aliases } = commandJSON;
+		const { name } = commandJSON;
 
 		this.#client = client;
 		this.#logger = client.logger;
@@ -62,35 +75,8 @@ export class CommandBuilder {
 			throw new Error(`Command name "${name}" is already registered.`);
 		}
 
-		const existingAliasOwner = client.aliases.findKey((aliases) =>
-			aliases.has(name)
-		);
-		if (existingAliasOwner) {
-			throw new Error(
-				`Command name "${name}" is already registered as an alias for command "${existingAliasOwner}".`
-			);
-		}
-
-		for (const alias of aliases) {
-			if (client.commands.has(alias)) {
-				throw new Error(
-					`Alias "${alias}" is already registered as a command name.`
-				);
-			}
-			const conflictingCommand = client.aliases.findKey((aliases) =>
-				aliases.has(alias)
-			);
-			if (conflictingCommand) {
-				throw new Error(
-					`Alias "${alias}" is already registered as an alias for command "${conflictingCommand}".`
-				);
-			}
-		}
-
 		client.commands.set(name, this);
-		if (aliases.length > 0) {
-			client.aliases.set(name, new Set(aliases));
-		}
+		client.invalidateCommandLookupCache();
 		this.logger.debug(`Loaded Command ${name}`);
 		this.#attached = true;
 		return this;
@@ -118,24 +104,19 @@ export class Command extends CommandBuilder {
 	constructor(options: CommandOptions) {
 		super(options.data);
 		const commandJSON = options.data.toJSON();
-		const execute = options.execute;
-		if (
-			(commandJSON.prefix_support ?? false) &&
-			(options.onMessage || execute)
-		) {
-			this.onMessage((ctx) => {
-				if (options.onMessage) return options.onMessage(ctx);
-				return execute?.(ctx);
-			});
+		if (commandJSON.prefix_support) {
+			const onMessage = this.createContextHandler(
+				options.onMessage,
+				options.execute
+			);
+			if (onMessage) this.onMessage(onMessage);
 		}
-		if (
-			(commandJSON.slash_support ?? false) &&
-			(options.onInteraction || execute)
-		) {
-			this.onInteraction((ctx) => {
-				if (options.onInteraction) return options.onInteraction(ctx);
-				return execute?.(ctx);
-			});
+		if (commandJSON.slash_support) {
+			const onInteraction = this.createContextHandler(
+				options.onInteraction,
+				options.execute
+			);
+			if (onInteraction) this.onInteraction(onInteraction);
 		}
 	}
 }

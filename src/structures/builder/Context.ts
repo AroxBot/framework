@@ -1,6 +1,11 @@
 import { ChatInputCommandInteraction, Locale, Message, User } from "discord.js";
 import type { TOptions } from "i18next";
 import type { Client } from "@structures/index.js";
+import {
+	collectTemplateTokens,
+	parseThings,
+	sanitizeDiscordText,
+} from "@utils/util.js";
 
 type ContextPayload<T extends ChatInputCommandInteraction | Message> =
 	T extends ChatInputCommandInteraction
@@ -10,12 +15,19 @@ type TranslateFn = (
 	key: string,
 	options?: TOptions & { defaultValue?: string }
 ) => string;
+type DefaultLocalizationFn = (key: string, fallback?: string) => string;
+type LocalizationAliasesFn = (
+	key: string,
+	fallback?: string | string[]
+) => string[];
 
 export interface InteractionContextJSON {
 	kind: "interaction";
 	interaction: ChatInputCommandInteraction;
 	author: User | null;
 	t: TranslateFn;
+	getDefaultLocalization: DefaultLocalizationFn;
+	getLocalizationAliases: LocalizationAliasesFn;
 }
 
 export interface MessageContextJSON {
@@ -24,6 +36,8 @@ export interface MessageContextJSON {
 	args: string[];
 	author: User | null;
 	t: TranslateFn;
+	getDefaultLocalization: DefaultLocalizationFn;
+	getLocalizationAliases: LocalizationAliasesFn;
 }
 
 export class Context<T extends ChatInputCommandInteraction | Message> {
@@ -48,6 +62,52 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		) as `${Locale}` | undefined;
 	}
 
+	#getFallbackLocale(): `${Locale}` {
+		const fallbackLng = this.client.i18n!.options.fallbackLng;
+		return ((Array.isArray(fallbackLng) ? fallbackLng[0] : fallbackLng) ??
+			Locale.EnglishUS) as `${Locale}`;
+	}
+
+	#resolveLocale(): `${Locale}` {
+		return (this.locale ??
+			this.client.options.getDefaultLang?.(
+				this as Context<ChatInputCommandInteraction | Message>
+			) ??
+			this.#getFallbackLocale()) as `${Locale}`;
+	}
+
+	#createTranslator() {
+		return (key: string, options?: TOptions & { defaultValue?: string }) =>
+			this.t(key, options);
+	}
+
+	#createDefaultLocalizationResolver() {
+		return (key: string, fallback?: string) =>
+			this.getDefaultLocalization(key, fallback);
+	}
+
+	#createLocalizationAliasesResolver() {
+		return (key: string, fallback?: string | string[]) =>
+			this.getLocalizationAliases(key, fallback);
+	}
+
+	#toAliasList(value: unknown): string[] {
+		if (Array.isArray(value)) {
+			return value
+				.flatMap((item) => this.#toAliasList(item))
+				.filter((item) => item.length > 0);
+		}
+
+		if (typeof value === "string") {
+			return value
+				.split(/[,\n|]/g)
+				.map((item) => item.trim())
+				.filter((item) => item.length > 0);
+		}
+
+		return [];
+	}
+
 	isInteraction(): this is Context<ChatInputCommandInteraction> {
 		return this.data instanceof ChatInputCommandInteraction;
 	}
@@ -66,43 +126,137 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 		return null;
 	}
 
+	private resolveIdentityToken(
+		identity: Pick<User, "id" | "username"> | null | undefined,
+		tokenPath: string
+	): string | undefined {
+		if (!identity) return undefined;
+
+		if (tokenPath === "" || tokenPath === "name" || tokenPath === "username") {
+			return sanitizeDiscordText(identity.username);
+		}
+		if (tokenPath === "id") {
+			return identity.id;
+		}
+		if (tokenPath === "ping" || tokenPath === "mention") {
+			return `<@${identity.id}>`;
+		}
+
+		return undefined;
+	}
+
+	private resolveContextToken(name: string): string | undefined {
+		const [targetRaw, ...rest] = name.toLowerCase().split(".");
+		const tokenPath = rest.join(".");
+		const target = targetRaw.trim();
+
+		if (target === "user" || target === "author") {
+			return this.resolveIdentityToken(this.author, tokenPath);
+		}
+		if (target === "bot") {
+			if (tokenPath === "ws.ping") {
+				return `${this.client.ws.ping}`;
+			}
+			return this.resolveIdentityToken(this.client.user, tokenPath);
+		}
+
+		return undefined;
+	}
+
+	private resolveTemplateToken(name: string): string | undefined {
+		return (
+			this.resolveContextToken(name) ??
+			this.client.parseTemplateToken(
+				name,
+				this as Context<ChatInputCommandInteraction | Message>
+			)
+		);
+	}
+
 	t(key: string, options?: TOptions & { defaultValue?: string }): string {
 		if (!this.client.i18n) {
 			throw new Error("i18n is not initialized");
 		}
 
-		const locale =
-			this.locale ??
-			this.client.options.getDefaultLang?.(
-				this as Context<ChatInputCommandInteraction | Message>
-			) ??
-			(Array.isArray(this.client.i18n.options.fallbackLng)
-				? this.client.i18n.options.fallbackLng[0]
-				: this.client.i18n.options.fallbackLng) ??
-			Locale.EnglishUS;
-
-		const t = this.client.i18n.getFixedT(locale);
+		const t = this.client.i18n.getFixedT(this.#resolveLocale());
+		const rawResult = t(key, { ...options, skipInterpolation: true });
+		const rawFallbacked =
+			rawResult === key && options?.defaultValue
+				? options.defaultValue
+				: rawResult;
+		const allowedTokens = collectTemplateTokens(rawFallbacked);
 
 		const result = t(key, options);
+		const fallbacked =
+			result === key && options?.defaultValue ? options.defaultValue : result;
 
-		if (result === key && options?.defaultValue) {
-			return options.defaultValue;
+		if (allowedTokens.size === 0) return fallbacked;
+
+		return parseThings(
+			fallbacked,
+			this as Context<ChatInputCommandInteraction | Message>,
+			(name, ctx) => {
+				if (!allowedTokens.has(name)) return undefined;
+				return ctx.resolveTemplateToken(name);
+			}
+		);
+	}
+
+	getDefaultLocalization(key: string, fallback?: string): string {
+		if (!this.client.i18n) return fallback ?? key;
+
+		const fallbackResolved = this.client.i18n.t(key, {
+			lng: this.#getFallbackLocale(),
+			defaultValue: fallback ?? key,
+		});
+		return typeof fallbackResolved === "string"
+			? fallbackResolved
+			: (fallback ?? key);
+	}
+
+	getLocalizationAliases(key: string, fallback?: string | string[]): string[] {
+		const fallbackList = this.#toAliasList(fallback ?? []);
+		if (!this.client.i18n) return fallbackList;
+
+		const locales = Array.from(
+			new Set([this.#resolveLocale(), this.#getFallbackLocale()])
+		);
+		const aliases = new Set<string>();
+
+		for (const locale of locales) {
+			const value = this.client.i18n.t(key, {
+				lng: locale,
+				defaultValue: "",
+				returnObjects: true,
+			});
+			for (const alias of this.#toAliasList(value)) {
+				if (alias !== key) aliases.add(alias);
+			}
 		}
 
-		return result;
+		if (aliases.size === 0) {
+			for (const alias of fallbackList) aliases.add(alias);
+		}
+
+		return Array.from(aliases);
 	}
 
 	toJSON(this: Context<ChatInputCommandInteraction>): InteractionContextJSON;
 	toJSON(this: Context<Message>): MessageContextJSON;
 	toJSON(): InteractionContextJSON | MessageContextJSON {
 		const { data, args, author } = this;
+		const t = this.#createTranslator();
+		const getDefaultLocalization = this.#createDefaultLocalizationResolver();
+		const getLocalizationAliases = this.#createLocalizationAliasesResolver();
 
 		if (this.isInteraction()) {
 			return {
 				kind: "interaction" as const,
 				interaction: data as ChatInputCommandInteraction,
 				author,
-				t: (key, options) => this.t(key, options),
+				t,
+				getDefaultLocalization,
+				getLocalizationAliases,
 			};
 		}
 
@@ -111,7 +265,9 @@ export class Context<T extends ChatInputCommandInteraction | Message> {
 			message: data as Message,
 			args,
 			author,
-			t: (key, options) => this.t(key, options),
+			t,
+			getDefaultLocalization,
+			getLocalizationAliases,
 		};
 	}
 }

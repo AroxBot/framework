@@ -12,9 +12,14 @@ import type { EventBuilder } from "../src/structures/builder/Event.js";
 import type { Client } from "../src/structures/core/Client.js";
 
 export type PrefixFn = (ctx: Context<Message>) => string | false;
+export type TemplateContext = Context<ChatInputCommandInteraction | Message>;
 export type GetDefaultLangFn = (
-	ctx: Context<ChatInputCommandInteraction | Message>
+	ctx: TemplateContext
 ) => `${Locale}` | undefined;
+export type TemplateParserFn = (
+	key: string,
+	context: TemplateContext
+) => string | undefined | null;
 
 export interface FrameworkOptions extends ClientOptions {
 	logger?: LoggerOptions;
