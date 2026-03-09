@@ -3,6 +3,8 @@ import { Logger } from "@utils/index.js";
 import type { MaybePromise } from "#types/extra.js";
 import { ApplicationCommandBuilder } from "@structures/builder/Builder.js";
 import { Precondition } from "@structures/builder/Precondition.js";
+import type { FailedPrecondition } from "@structures/builder/Precondition.js";
+import type { TemplateContext } from "#types/client.js";
 import type { IPrecondition } from "#types/precondition.js";
 import type {
 	InteractionContextJSON,
@@ -11,7 +13,7 @@ import type {
 
 type MessageContext = MessageContextJSON;
 type InteractionContext = InteractionContextJSON;
-type CommandContext = MessageContext | InteractionContext;
+type RuntimeCommandContext = MessageContext | InteractionContext;
 
 export class CommandBuilder {
 	readonly preconditions: Precondition[] = [];
@@ -23,9 +25,9 @@ export class CommandBuilder {
 	_onMessage?: (ctx: MessageContext) => MaybePromise<void>;
 	_onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
 
-	protected createContextHandler<T extends CommandContext>(
+	protected createContextHandler<T extends RuntimeCommandContext>(
 		primary: ((ctx: T) => MaybePromise<void>) | undefined,
-		fallback: ((ctx: CommandContext) => MaybePromise<void>) | undefined
+		fallback: ((ctx: RuntimeCommandContext) => MaybePromise<void>) | undefined
 	) {
 		if (primary) {
 			return (ctx: T) => primary(ctx);
@@ -66,20 +68,12 @@ export class CommandBuilder {
 		}
 	}
 
-	addPrecondition(precondition: IPrecondition) {
-		this.preconditions.push(new Precondition(precondition));
-		return this;
-	}
-
-	addPreconditions(...preconditions: IPrecondition[]) {
-		this.preconditions.push(...preconditions.map((p) => new Precondition(p)));
-		return this;
-	}
-
-	async checkPreconditions(ctx: CommandContext): Promise<Precondition | null> {
+	async checkPreconditions(
+		ctx: TemplateContext
+	): Promise<FailedPrecondition | null> {
 		for (const precondition of this.preconditions) {
-			const passed = await precondition.check(ctx);
-			if (!passed) return precondition;
+			const [passed, translateOptions] = await precondition.check(ctx);
+			if (!passed) return { precondition, translateOptions };
 		}
 		return null;
 	}
@@ -116,14 +110,22 @@ export class CommandBuilder {
 
 export interface CommandOptions {
 	data: ApplicationCommandBuilder;
-	execute?: (ctx: CommandContext) => MaybePromise<void>;
+	execute?: (ctx: RuntimeCommandContext) => MaybePromise<void>;
 	onMessage?: (ctx: MessageContext) => MaybePromise<void>;
 	onInteraction?: (ctx: InteractionContext) => MaybePromise<void>;
+	preconditions?: IPrecondition[];
 }
 
 export class Command extends CommandBuilder {
 	constructor(options: CommandOptions) {
 		super(options.data);
+		if (options.preconditions?.length) {
+			this.preconditions.push(
+				...options.preconditions.map(
+					(precondition) => new Precondition(precondition)
+				)
+			);
+		}
 		const commandJSON = options.data.toJSON();
 		if (commandJSON.prefix_support) {
 			const onMessage = this.createContextHandler(

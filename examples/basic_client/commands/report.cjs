@@ -99,4 +99,5 @@ module.exports = new Command({
 
 		return ctx.message.reply(safeReply(ctx.t("test:report_prefix")));
 	},
-}).addPrecondition(require("../preconditions/error.cjs"));
+	preconditions: [require("../preconditions/error.cjs")],
+});

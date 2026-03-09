@@ -52,11 +52,14 @@ export default new EventBuilder(
 			context.logger.debug(
 				`${ctx.author?.tag ?? "Unknown"} used ${command.data.name}(message)`
 			);
-			const failedPrecondition = await command.checkPreconditions(ctx.toJSON());
+			const failedPrecondition = await command.checkPreconditions(ctx);
 			if (failedPrecondition) {
 				await message
 					.reply({
-						content: failedPrecondition.errorMessage,
+						content: ctx.t(
+							failedPrecondition.precondition.getErrorKey(),
+							failedPrecondition.translateOptions
+						),
 						allowedMentions: { parse: [], repliedUser: false },
 					})
 					.then(deleteMessageAfterSent);

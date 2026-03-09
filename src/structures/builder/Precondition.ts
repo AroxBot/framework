@@ -1,23 +1,44 @@
-import type { IPrecondition } from "#types/precondition.js";
 import type {
-	InteractionContextJSON,
-	MessageContextJSON,
-} from "@structures/builder/Context.js";
+	PreconditionCheckResult,
+	PreconditionTranslateOptions,
+	PreconditionRun,
+} from "#types/precondition.js";
+import type { TemplateContext } from "#types/client.js";
+export type { PreconditionTranslateOptions };
 
-type CommandContext = MessageContextJSON | InteractionContextJSON;
+export interface PreconditionOptions {
+	name: string;
+	run: PreconditionRun;
+}
+
+export interface FailedPrecondition {
+	precondition: Precondition;
+	translateOptions?: PreconditionTranslateOptions;
+}
 
 export class Precondition {
-	readonly name: string;
-	readonly errorMessage: string;
-	readonly #run: (ctx: CommandContext) => boolean | Promise<boolean>;
+	public readonly name: string;
+	#run: PreconditionRun;
 
-	constructor(data: IPrecondition) {
-		this.name = data.name;
-		this.errorMessage = data.errorMessage;
-		this.#run = data.run;
+	public constructor(options: PreconditionOptions) {
+		this.name = options.name;
+		this.#run = options.run;
 	}
 
-	async check(ctx: CommandContext): Promise<boolean> {
-		return this.#run(ctx);
+	public async check(
+		context: TemplateContext
+	): Promise<PreconditionCheckResult> {
+		const result = await this.#run(context);
+		if (typeof result === "boolean") return [result];
+		return result;
+	}
+
+	public setRun(run: PreconditionRun) {
+		this.#run = run;
+		return this;
+	}
+
+	public getErrorKey(): string {
+		return `error:precondition.${this.name}`;
 	}
 }

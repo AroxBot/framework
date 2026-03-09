@@ -13,6 +13,7 @@ import type { Client } from "../src/structures/core/Client.js";
 
 export type PrefixFn = (ctx: Context<Message>) => string | false;
 export type TemplateContext = Context<ChatInputCommandInteraction | Message>;
+
 export type GetDefaultLangFn = (
 	ctx: TemplateContext
 ) => `${Locale}` | undefined;

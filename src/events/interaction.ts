@@ -36,10 +36,13 @@ export default new EventBuilder(Events.InteractionCreate, false).onExecute(
 			context.logger.debug(
 				`${ctx.author?.tag ?? "Unknown"} used ${command.data.name}(interaction)`
 			);
-			const failedPrecondition = await command.checkPreconditions(ctx.toJSON());
+			const failedPrecondition = await command.checkPreconditions(ctx);
 			if (failedPrecondition) {
 				await interaction.reply({
-					content: failedPrecondition.errorMessage,
+					content: ctx.t(
+						failedPrecondition.precondition.getErrorKey(),
+						failedPrecondition.translateOptions
+					),
 					flags: MessageFlags.Ephemeral,
 				});
 				return;

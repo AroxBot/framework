@@ -1,13 +1,18 @@
-import type { MaybePromise } from "./extra.js";
-import type {
-	InteractionContextJSON,
-	MessageContextJSON,
-} from "../src/structures/builder/Context.js";
+import type { MaybePromise, TranslateOptions } from "./extra.js";
+import type { TemplateContext } from "./client.js";
 
-type CommandContext = MessageContextJSON | InteractionContextJSON;
+export type PreconditionTranslateOptions = TranslateOptions;
+
+export type PreconditionCheckResult = [
+	success: boolean,
+	options?: PreconditionTranslateOptions,
+];
+
+export type PreconditionRun = (
+	context: TemplateContext
+) => MaybePromise<boolean | PreconditionCheckResult>;
 
 export interface IPrecondition {
 	name: string;
-	run: (ctx: CommandContext) => MaybePromise<boolean>;
-	errorMessage: string;
+	run: PreconditionRun;
 }

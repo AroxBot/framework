@@ -3,18 +3,24 @@ const { PermissionFlagsBits } = require("discord.js");
 /** @type {import("../../../dist/index.cjs").IPrecondition} */
 const adminOnly = {
 	name: "adminOnly",
-	errorMessage:
-		"Bu komutu kullanmak için yönetici yetkisine sahip olmalısınız.",
 	run: (ctx) => {
-		const member =
-			ctx.kind === "interaction" ? ctx.interaction.member : ctx.message.member;
+		const member = ctx.data.member;
 
 		if (!member?.permissions) {
-			return false;
+			return [
+				false,
+				{
+					reason: "missing_member_permissions",
+					defaultValue: "Precondition blocked: {{reason}}",
+				},
+			];
 		}
 
-		const permissions = new PermissionsBitField(member.permissions);
-		return permissions.has(PermissionFlagsBits.Administrator);
+		if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
+			return [false];
+		}
+
+		return [true];
 	},
 };
 

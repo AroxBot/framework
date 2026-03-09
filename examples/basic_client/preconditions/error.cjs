@@ -1,5 +1,10 @@
 module.exports = {
 	name: "error",
-	errorMessage: "Bu komutu kullanma la.",
-	run: () => false,
+	run: () => [
+		false,
+		{
+			reason: "forced_error_example",
+			defaultValue: "Precondition blocked: {{reason}}",
+		},
+	],
 };
