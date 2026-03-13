@@ -36,6 +36,17 @@ export default new EventBuilder(Events.InteractionCreate, false).onExecute(
 			context.logger.debug(
 				`${ctx.author?.tag ?? "Unknown"} used ${command.data.name}(interaction)`
 			);
+			const failedPrecondition = await command.checkPreconditions(ctx);
+			if (failedPrecondition) {
+				await interaction.reply({
+					content: ctx.t(
+						failedPrecondition.precondition.getErrorKey(),
+						failedPrecondition.translateOptions
+					),
+					flags: MessageFlags.Ephemeral,
+				});
+				return;
+			}
 			if (command._onInteraction) await command._onInteraction(ctx.toJSON());
 		} catch (error) {
 			context.client.logger.error(

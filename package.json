@@ -40,6 +40,7 @@
 	},
 	"scripts": {
 		"prepare": "node scripts/prepareHusky.js",
+		"example": "node examples/basic_client/index.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"check": "oxlint --type-aware --type-check && oxfmt --check",
 		"format": "oxfmt",
