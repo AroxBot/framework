@@ -60,9 +60,9 @@
 		"husky": "^9.1.7",
 		"i18next-fs-backend": "^2.6.1",
 		"libnpmpack": "~9",
-		"oxfmt": "^0.39.0",
+		"oxfmt": "^0.41.0",
 		"oxlint": "^1.39.0",
-		"oxlint-tsgolint": "^0.16.0",
+		"oxlint-tsgolint": "^0.17.0",
 		"tsc-alias": "^1.8.16",
 		"typescript": "~5",
 		"unplugin-oxc": "^0.6.0"
