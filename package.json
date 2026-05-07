@@ -53,18 +53,18 @@
 		"colorette": "^2.0.20",
 		"fast-glob": "^3.3.3",
 		"fastest-levenshtein": "^1.0.16",
-		"i18next": "^25.8.0"
+		"i18next": "^26.0.10"
 	},
 	"devDependencies": {
-		"esbuild": "^0.27.3",
+		"esbuild": "^0.28.0",
 		"husky": "^9.1.7",
 		"i18next-fs-backend": "^2.6.1",
 		"libnpmpack": "~9",
-		"oxfmt": "^0.41.0",
+		"oxfmt": "^0.48.0",
 		"oxlint": "^1.39.0",
-		"oxlint-tsgolint": "^0.17.0",
+		"oxlint-tsgolint": "^0.22.1",
 		"tsc-alias": "^1.8.16",
-		"typescript": "~5",
+		"typescript": "~6",
 		"unplugin-oxc": "^0.6.0"
 	},
 	"peerDependencies": {
